@@ -1,7 +1,7 @@
 # MicroPython-MCP7940
 A MicroPython driver for the Microchip MCP7940 RTC chip
 
-This is the RTC IC used on the TinyPICO RTC shield.
+This is the RTC IC used on the [TinyPICO RTC shield](https://www.tinypico.com/add-ons).
 
 ## Currently under development
 Alarms have been implemented and are curretly being tested They should be available soon.
