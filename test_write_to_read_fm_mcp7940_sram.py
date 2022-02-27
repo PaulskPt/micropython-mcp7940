@@ -1,7 +1,7 @@
 # MicroPython datetime SRAM Save/Read test for Unexpected Maker TinyPICO RTC Shield
 # containing a MCP4079 realtime clock
 # See: Microchip Technology Inc MCP7940N datasheet, chapter 6.1 SRAM/RTCC Registers
-# Saving and reading datetime tuple to and from User SRAM
+# Writing and reading datetime tuple to and from User SRAM
 # This script uses the mcp7940 driver file from:
 # https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
 # Copyright (c) 2022 (for this script) Paulus Schulinck (@Paulskpt on GitHub)
