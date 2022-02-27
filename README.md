@@ -8,6 +8,7 @@ Alarms have been implemented and are curretly being tested They should be availa
 
 ## Future development
 Being able to utilise the internal memory to set and read data back
+See ```test_write_to_read_fm_mcp7940_sram.py```
 
 ## Example usage
 
