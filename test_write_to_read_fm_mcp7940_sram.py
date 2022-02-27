@@ -32,17 +32,9 @@ bbu_was_enabled = None  # battery backup enable flag
 def convert(list):
     return tuple(i for i in list)
 
-def write_cma(ads):
-    c = 0x2c
+def write_val_to_sram(ads, val):
     for j in range(7, -1, -1):
-        bit = c >> j
-        bit = bit & 0x01
-        mcp._set_bit(ads, j, bit)
-        
-def write_eot_marker(ads):
-    c = EOT
-    for j in range(7, -1, -1):
-        bit = c >> j
+        bit = val >> j
         bit = bit & 0x01
         mcp._set_bit(ads, j, bit)
     
@@ -70,7 +62,7 @@ def write_dt_to_sram(dt):
             if c_addr > end_ads:
                 break
         if _ <= le-1:
-            write_cma(c_addr)
+            write_val_to_sram(c_addr, CMA)
             cnt += 1
             if my_debug:
                 print("byte nr {}, value [{}] saved to SRAM address: 0x{:x}".format(cnt, ",", c_addr))
@@ -78,7 +70,7 @@ def write_dt_to_sram(dt):
             if c_addr > end_ads:
                 break
 
-    write_eot_marker(c_addr)
+    write_val_to_sram(c_addr, EOT)
     cnt += 1
     if my_debug:
         print("byte nr {}, value {} [= EOT indicator] saved to SRAM address: 0x{:x}".format(cnt, EOT, c_addr))
@@ -89,7 +81,7 @@ def read_dt_from_sram():
     dt = list(a)
     tmp = list(a)
     
-    print("\nReading user memory (SRAM)")
+    print("\nReading datetime tuple from user memory (SRAM)")
     for _ in range(start_ads, end_ads):
         val = 0
         n = 0
@@ -148,7 +140,7 @@ def main():
         write_dt_to_sram(mcp.time)  # save the current dt stamp to the RTC's SRAM
         time.sleep(2)
         dt_tpl = read_dt_from_sram()
-        if my_debug:
+        if not my_debug:
             print("\ndatetime tuple read from RTC User SRAM: {}, type: {}".format(dt_tpl, type(dt_tpl)))
     
 main()
