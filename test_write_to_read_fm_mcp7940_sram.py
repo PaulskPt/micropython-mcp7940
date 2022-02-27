@@ -50,7 +50,7 @@ def write_dt_to_sram(dt):
     le = len(dt)
     c_addr = start_ads
     cnt = 0
-    print("\nSaving current datetime tuple to user memory (SRAM)")
+    print("\nWriting current datetime tuple to user memory (SRAM)")
     for _ in range(le):
         n = dt[_]
         sn = str(n)
