@@ -1,6 +1,6 @@
 #
 # Downloaded from: https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
-# On 2022-02-28
+# On 2022-02-27
 # In class MCCP7940, three functions added by @Paulskpt:
 # - weekday()
 # - write_to_SRAM()
