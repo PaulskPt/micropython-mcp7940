@@ -84,8 +84,8 @@ def setup():
     print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))
     SRAM_dt = convert( mcp.read_fm_SRAM() )
     print(TAG+"Contents of MCP7940 RTC\'s SRAM:",SRAM_dt)
-    print(TAG+"SYS_dt[yy] = ", SYS_dt[yy] )
-    print(TAG+"RTC_dt[yy] = ", RTC_dt[yy] )
+    print(TAG+"SYS_dt[yy]  = ", SYS_dt[yy] )
+    print(TAG+"RTC_dt[yy]  = ", RTC_dt[yy] )
     print(TAG+"SRAM_dt[yy] = ", SRAM_dt[yy] )
     if SYS_dt[yy] == 2000:
         if RTC_dt[yy] >= 2020:
@@ -96,7 +96,7 @@ def setup():
             
     if RTC_update:
         print(TAG+"MCP7940 RTC and SYS datetime stamps do not match")
-        update_mRTC(True) #use_SRAM_dt)
+        update_mRTC(use_SRAM_dt)
 
 
     if not mcp.is_started():
