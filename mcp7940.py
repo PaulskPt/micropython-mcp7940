@@ -39,6 +39,7 @@ class MCP7940:
     ST = 7  # Status bit
     VBATEN = 3  # External battery backup supply enable bit
     
+    """ Dictionary added by @Paulskpt. See weekday_S() """
     DOW = { 0: "Monday",
             1: "Tuesday",
             2: "Wednesday",
@@ -173,6 +174,7 @@ class MCP7940:
         return dt[le-1:][0]  # dt[le-1:] results in tuple: (0,) so we have to extract the first element.
     
     def weekday_S(self):
+        """ Function added by @Paulskpt """       
         return MCP7940.DOW[self.weekday_N()]
     
     def _get_time(self, start_reg = 0x00):
