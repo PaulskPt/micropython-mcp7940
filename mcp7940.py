@@ -205,8 +205,9 @@ class MCP7940:
         start_reg = 0x20
         num_regs = 0x8
         dt = self._i2c.readfrom_mem(MCP7940.ADDRESS, start_reg, num_regs) # Reading datetime stamp from User SRAM
+        le = len(dt)
         if my_debug:
-            print("MCP7940.read_fm_SRAM(): data read: {}, type: {}".format(dt, type(dt)))
+            print("MCP7940.read_fm_SRAM(): data read: {}, type: {}, bytes read: {}".format(dt, type(dt), le))
         
         dt2 = ()
         for _ in range(len(dt)):

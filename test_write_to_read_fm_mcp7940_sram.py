@@ -35,6 +35,13 @@ mm = 4
 ss = 5
 wd = 6
 
+def set_MCP7940():
+    """ called by setup(). Call only when MCP7940 datetime is not correct """
+    global RTC_dt
+    new_dt = (2022, 02, 28, 17, 30, 0, 0, 0)
+    mcp.time = new_dt
+    RTC_dt = mcp.time
+    
 # Convert a list to a tuple
 def convert(list):
     return tuple(i for i in list)
@@ -58,7 +65,8 @@ def setup():
     TAG = "setup(): "
     print(TAG+"MCP7940 RTC currently set to: {}, type: {}".format(RTC_dt, type(RTC_dt)))
     print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))
-
+    # Make next line active only when MCP7940 RTC is not correct
+    #set_MCP7940()
     if RTC_dt[yy] < SYS_dt[yy]:
         RTC_update = True
     else:
