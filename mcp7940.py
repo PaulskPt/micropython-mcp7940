@@ -1,10 +1,12 @@
 #
 # Downloaded from: https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
 # On 2022-02-27
-# In class MCCP7940, three functions added by @Paulskpt:
-# - weekday()
+# In class MCCP7940, four functions added by @Paulskpt:
+# - weekday_N()
+# - weekday_S()
 # - write_to_SRAM()
 # - read_fm_SRAM()
+# dictionary DOW added
 # For the sake of readability: replaced index values like [0] ...[6] with [RTCSEC] ... [RTCYEAR]
 #
 from micropython import const
@@ -34,9 +36,16 @@ class MCP7940:
     RTCDATE = 0x04
     RTCMTH = 0x05
     RTCYEAR = 0x06
-    RTCSEC = 0x00  
     ST = 7  # Status bit
     VBATEN = 3  # External battery backup supply enable bit
+    
+    DOW = { 0: "Monday",
+            1: "Tuesday",
+            2: "Wednesday",
+            3: "Thursday",
+            4: "Friday",
+            5: "Saturday",
+            6: "Sunday" }
 
     def __init__(self, i2c, status=True, battery_enabled=True):
         self._i2c = i2c
@@ -157,11 +166,14 @@ class MCP7940:
             return True
         return False
     
-    def weekday(self):
+    def weekday_N(self):
         """ Function added by @Paulskpt """
         dt = self._get_time()
         le = len(dt)
         return dt[le-1:][0]  # dt[le-1:] results in tuple: (0,) so we have to extract the first element.
+    
+    def weekday_S(self):
+        return MCP7940.DOW[self.weekday_N()]
     
     def _get_time(self, start_reg = 0x00):
         num_registers = 7 if start_reg == 0x00 else 6

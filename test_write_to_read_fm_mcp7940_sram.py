@@ -7,23 +7,26 @@
 # Copyright (c) 2022 (for this script) Paulus Schulinck (@Paulskpt on GitHub)
 # License: MIT
 #
+# NOTE:
+# If you want to correct the datetime values of the MCP7940 RTC
+# then set the values of global dt_dict and set the global flag MCP7940_RTC_update to True
+# then for the next run reset the global flag MCP7940_RTC_update to False
+#
 from mcp7940 import MCP7940
 from machine import Pin, SoftI2C, RTC
 import utime as time
 
 my_debug = True  # global debug flag
 
+lStart = True
+
 mRTC = RTC()
 
 i2c = SoftI2C(sda=Pin(21), scl=Pin(22)) # Correct I2C pins for TinyPICO
 mcp = MCP7940(i2c)
 
-start_ads = 0x20
-end_ads = 0x60
-EOT = 0x7F  # End-of-text marker
-CMA = 0x2C  # Comma
-
-RTC_update = False
+MCP7940_RTC_update = False  # Set to True to update the MCP7940 RTC datetime values (and set the values of dt_dict below)
+mRTC_update = False
 RTC_dt = mcp.time
 SYS_dt = time.localtime()
 SRAM_dt = None  #see setup()
@@ -37,19 +40,29 @@ ss = 5
 wd = 6
 yd = 7
 
+# Adjust the values of the dt_dict to the actual date and time
+# Don't forget to enable the MCP7940_RTC_update flag (above)
+dt_dict = { yy: 2022,
+            mo: 2,
+            dd: 28,
+            hh: 19,
+            mm: 19,
+            ss: 0,
+            wd: 0,
+            yd: 0 }
+
 def set_MCP7940():
     """ called by setup(). Call only when MCP7940 datetime is not correct """
-    global RTC_dt
-    new_dt = (2022, 02, 28, 17, 30, 0, 0, 0)
-    mcp.time = new_dt
+    mcp.time = (dt_dict[yy], dt_dict[mo], dt_dict[dd], dt_dict[hh], dt_dict[mm], dt_dict[ss], dt_dict[wd], dt_dict[yd])
     RTC_dt = mcp.time
+    print("set_MCP7940(): MCP7940 RTC updated to: ", RTC_dt)
     
 # Convert a list to a tuple
 def convert(list):
     return tuple(i for i in list)
 
 def update_mRTC(upd_fm_SRAM):
-    global mcp
+    global mcp, RTC_dt
     TAG = "update_mRTC(): "
     if upd_fm_SRAM:
         if my_debug:
@@ -64,9 +77,9 @@ def update_mRTC(upd_fm_SRAM):
         
     if my_debug:
         print(TAG+"Current microprocessor\'s RTC datetime value: ", mRTC.datetime())
-    weekday = mcp.weekday()
+    weekday = mcp.weekday_N()
     if my_debug:
-         print(TAG+"mcp.weekday() result = ", weekday)
+         print(TAG+"mcp.weekday_N() result = ", weekday)
     t_dt = (RTC_dt[yy], RTC_dt[mo], RTC_dt[dd], RTC_dt[hh], RTC_dt[mm], RTC_dt[ss], weekday, 0)
     if my_debug:
         print(TAG+"Updating the microprocessor\'s RTC with: {}, type: {}".format(t_dt, type(t_dt)))
@@ -76,10 +89,13 @@ def update_mRTC(upd_fm_SRAM):
         print(TAG+"Check: time.localtime() result: ", time.localtime())
 
 def setup():
-    global RTC_update, mRTC, SRAM_dt
+    global mRTC_update, mRTC, SRAM_dt
     TAG = "setup():       "
     use_SRAM_dt = False
     
+    if MCP7940_RTC_update:
+        set_MCP7940()
+        
     print(TAG+"MCP7940 RTC currently set to: {}, type: {}".format(RTC_dt, type(RTC_dt)))
     print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))
     SRAM_dt = convert( mcp.read_fm_SRAM() )
@@ -89,12 +105,12 @@ def setup():
     print(TAG+"SRAM_dt[yy] = ", SRAM_dt[yy] )
     if SYS_dt[yy] == 2000:
         if RTC_dt[yy] >= 2020:
-            RTC_update = True
+            mRTC_update = True
         elif SRAM_dt[yy] >= 2020:
-            RTC_update = True
+            mRTC_update = True
             use_SRAM_dt = True
-            
-    if RTC_update:
+
+    if mRTC_update:
         print(TAG+"MCP7940 RTC and SYS datetime stamps do not match")
         update_mRTC(use_SRAM_dt)
 
@@ -104,10 +120,25 @@ def setup():
             print(TAG+"Going to start the RTC\'s MCP oscillator")
         mcp.start() # Start MCP oscillator
 
+def get_dt():
+    global lStart
+    if lStart:
+        lStart = False
+        while True:
+            dt = mcp.time
+            if dt[ss] == 0: # align for 0 seconds (only at startup)
+                break
+    else:
+        dt = mcp.time
+    dt2 = "{} {:4d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(mcp.weekday_S(),dt[yy], dt[mo], dt[dd], dt[hh], dt[mm], dt[ss])
+    return dt2
+
+      
 def main():
     TAG = "main():        "
-    rtc_updated = False
+    mRTC_updated = False
     bbu_was_enabled = None  # battery backup enable flag
+    t_start = time.ticks_ms()
     
     print("MCP date time test")
     setup()
@@ -154,15 +185,21 @@ def main():
                     if mcp.time[yy] < dt_tpl[yy]:
                         mcp.time = dt_tpl  # update the RTC with the saved date time stamp
                         print(TAG+"MCP7940 RTC updated with new date time stamp: ", mcp.time)
-                        rtc_updated = True
+                        mRTC_updated = True
                 else:
                     print(TAG+"Year from  RTC\'s SRAM restored datetime tuple is less than 2020...awaiting adjustment to current year")
                     mcp.time = time.localtime() # Set time
-            #print("Check: reading from SRAM: ",convert( mcp.read_fm_SRAM() ))
-            print("", end='\n')
                     
         except KeyboardInterrupt:
             print("", end='\n')
             raise SystemExit
-
+        
+    #print("Check: reading from SRAM: ",convert( mcp.read_fm_SRAM() ))
+    print("", end='\n')
+    while True:
+        t_current = time.ticks_ms()
+        t_elapsed = t_current - t_start
+        if t_elapsed > 10000:
+            t_start = t_current
+            print("Current datetime:", get_dt())      
 main()
