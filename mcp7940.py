@@ -1,9 +1,10 @@
 #
 # Downloaded from: https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
 # On 2022-02-27
-# In class MCCP7940, four functions added by @Paulskpt:
+# In class MCCP7940, the following functions added by @Paulskpt:
 # - weekday_N()
 # - weekday_S()
+# - yearday()
 # - write_to_SRAM()
 # - read_fm_SRAM()
 # dictionary DOW added
@@ -47,6 +48,19 @@ class MCP7940:
             4: "Friday",
             5: "Saturday",
             6: "Sunday" }
+    
+    DOM = { 1:31,
+            2:28,
+            3:31,
+            4:30,
+            5:31,
+            6:30,
+            7:31,
+            8:31,
+            9:30,
+            10:31,
+            11:30,
+            12:31}
 
     def __init__(self, i2c, status=True, battery_enabled=True):
         self._i2c = i2c
@@ -119,8 +133,8 @@ class MCP7940:
             >>> zipped = zip(x,y)
             >>> list(zipped)
             [(1, 4), (2, 5), (3, 6)]"""
-        # t = bytes([MCP7940.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)])
-        t = [(MCP7940.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
+        # t = bytes([self.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)])
+        t = [(self.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
         # Note that some fields will be overwritten that are important!
         # fixme!
         if my_debug:
@@ -137,7 +151,7 @@ class MCP7940:
         # Reorder
         time_reg = [seconds, minutes, hours, weekday + 1, date, month]
         reg_filter = (0x7F, 0x7F, 0x3F, 0x07, 0x3F, 0x3F)  # No year field for alarms
-        t = [(MCP7940.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
+        t = [(self.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
         self._i2c.writeto_mem(MCP7940.ADDRESS, 0x0A, bytes(t))
 
     @property
@@ -150,18 +164,18 @@ class MCP7940:
         # Reorder
         time_reg = [seconds, minutes, hours, weekday + 1, date, month]
         reg_filter = (0x7F, 0x7F, 0x3F, 0x07, 0x3F, 0x3F)  # No year field for alarms
-        t = [(MCP7940.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
+        t = [(self.int_to_bcd(reg) & filt) for reg, filt in zip(time_reg, reg_filter)]
         self._i2c.writeto_mem(MCP7940.ADDRESS, 0x11, bytes(t))
 
-    def bcd_to_int(bcd):
+    def bcd_to_int(self, bcd):
         """ Expects a byte encoded with 2x 4bit BCD values. """
         # Alternative using conversions: int(str(hex(bcd))[2:])
         return (bcd & 0xF) + (bcd >> 4) * 10 
 
-    def int_to_bcd(i):
+    def int_to_bcd(self, i):
         return (i // 10 << 4) + (i % 10)
 
-    def is_leap_year(year):
+    def is_leap_year(self, year):
         """ https://stackoverflow.com/questions/725098/leap-year-calculation """
         if (year % 4 == 0 and year % 100 != 0) or year % 400 == 0:
             return True
@@ -177,6 +191,24 @@ class MCP7940:
         """ Function added by @Paulskpt """       
         return MCP7940.DOW[self.weekday_N()]
     
+    def yearday(self):
+        """ Function added by @Paulskpt """
+        dt = self._get_time()
+        ndays = 0
+        curr_yr = dt[0]
+        curr_mo = dt[1]
+        curr_date = dt[2]
+        for _ in range(1, curr_mo):
+            try:
+                ndays += MCP7940.DOM[_]
+                if _ == 2 and self.is_leap_year(curr_yr):
+                    ndays += 1
+            except KeyError:
+                pass
+        ndays += curr_date
+        yearday = ndays
+        return ndays
+
     def _get_time(self, start_reg = 0x00):
         num_registers = 7 if start_reg == 0x00 else 6
         time_reg = self._i2c.readfrom_mem(MCP7940.ADDRESS, start_reg, num_registers)  # Reading too much here for alarms
@@ -184,7 +216,7 @@ class MCP7940:
         if my_debug:
             print(time_reg)
             print(reg_filter)
-        t = [MCP7940.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)]
+        t = [self.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)]
         # Reorder
         t2 = (t[MCP7940.RTCMTH], t[MCP7940.RTCDATE], t[MCP7940.RTCHOUR], t[MCP7940.RTCMIN], t[MCP7940.RTCSEC], t[MCP7940.RTCWKDAY] - 1)
         t = (t[MCP7940.RTCYEAR] + 2000,) + t2 + (0,) if num_registers == 7 else t2

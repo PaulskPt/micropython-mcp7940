@@ -122,6 +122,7 @@ def setup():
 
 def get_dt():
     global lStart
+
     if lStart:
         lStart = False
         while True:
@@ -130,8 +131,9 @@ def get_dt():
                 break
     else:
         dt = mcp.time
-    dt2 = "{} {:4d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(mcp.weekday_S(),dt[yy], dt[mo], dt[dd], dt[hh], dt[mm], dt[ss])
-    return dt2
+    yrday = mcp.yearday()
+
+    return "{} {:4d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}. Day of year: {:>3d}".format(mcp.weekday_S(),dt[yy], dt[mo], dt[dd], dt[hh], dt[mm], dt[ss], yrday)
 
       
 def main():
