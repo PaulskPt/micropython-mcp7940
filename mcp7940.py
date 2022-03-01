@@ -1,13 +1,15 @@
 #
 # Downloaded from: https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
 # On 2022-02-27
+# Following are modifications by @Paulskpt (GitHub)
+# Added global debug flag `my_debug`
 # In class MCCP7940, the following functions added by @Paulskpt:
 # - weekday_N()
 # - weekday_S()
 # - yearday()
 # - write_to_SRAM()
 # - read_fm_SRAM()
-# dictionary DOW added
+# Added dictionaries: DOW and DOM
 # For the sake of readability: replaced index values like [0] ...[6] with [RTCSEC] ... [RTCYEAR]
 #
 from micropython import const

@@ -3,14 +3,22 @@
 # See: Microchip Technology Inc MCP7940N datasheet, chapter 6.1 SRAM/RTCC Registers
 # Writing and reading datetime tuple to and from User SRAM
 # This script uses the mcp7940 driver file from:
-# https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
+# my forked version on: https://github.com/PaulskPt/micropython-mcp7940/blob/master/mcp7940.py
+# which is a forked version of: https://github.com/tinypico/micropython-mcp7940/blob/master/mcp7940.py
+# which is a forked version of: https://github.com/mattytrentini/micropython-mcp7940/blob/master/mcp7940.py
+#
 # Copyright (c) 2022 (for this script) Paulus Schulinck (@Paulskpt on GitHub)
 # License: MIT
 #
-# NOTE:
-# If you want to correct the datetime values of the MCP7940 RTC
-# then set the values of global dt_dict and set the global flag MCP7940_RTC_update to True
-# then for the next run reset the global flag MCP7940_RTC_update to False
+# HOW TO UPDATE THE MCP7940 RTC:
+# If you want to correct the datetime values of the MCP7940 RTC,
+# follow this procedure:
+# a) from the global dictionary: `dt_dict` below change only the values for: yy, mo, dd, hh and mm.
+#    The values of ss, wd and yd will be set by this script;
+# b) set the global flag `MCP7940_RTC_update` to True;
+# c) run this script so that the RTC will be updated. The latest datetime will be saved in SRAM too;
+# d) reset the global flag `MCP7940_RTC_update` to False;
+# e) now you can again run this script permanently.
 #
 from mcp7940 import MCP7940
 from machine import Pin, SoftI2C, RTC
