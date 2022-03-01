@@ -96,8 +96,8 @@ def setup():
     if MCP7940_RTC_update:
         set_MCP7940()
         
+    print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))       
     print(TAG+"MCP7940 RTC currently set to: {}, type: {}".format(RTC_dt, type(RTC_dt)))
-    print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))
     SRAM_dt = convert( mcp.read_fm_SRAM() )
     print(TAG+"Contents of MCP7940 RTC\'s SRAM:",SRAM_dt)
     print(TAG+"Microcontroller (time.localtime()) year  = ", SYS_dt[yy] )
