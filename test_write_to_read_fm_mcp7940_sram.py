@@ -150,7 +150,7 @@ def main():
     bbu_was_enabled = None  # battery backup enable flag
     t_start = time.ticks_ms()
     
-    print("MCP7940 date time test")
+    print("MCP7940 date time test: saving and reading RTC datetime data to MCP7940 RTC\'s User SRAM")
     setup()
     
     while True:
