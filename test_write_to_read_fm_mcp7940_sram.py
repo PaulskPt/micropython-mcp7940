@@ -150,7 +150,7 @@ def main():
     bbu_was_enabled = None  # battery backup enable flag
     t_start = time.ticks_ms()
     
-    print("MCP date time test")
+    print("MCP7940 date time test")
     setup()
     
     while True:
