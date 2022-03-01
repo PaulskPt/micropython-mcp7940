@@ -79,7 +79,7 @@ def update_mRTC(upd_fm_SRAM):
         print(TAG+"Current microprocessor\'s RTC datetime value: ", mRTC.datetime())
     weekday = mcp.weekday_N()
     if my_debug:
-         print(TAG+"mcp.weekday_N() result = ", weekday)
+         print(TAG+"mcp.weekday_N() result = {} = {}".format(weekday, mcp.weekday_S()))
     t_dt = (RTC_dt[yy], RTC_dt[mo], RTC_dt[dd], RTC_dt[hh], RTC_dt[mm], RTC_dt[ss], weekday, 0)
     if my_debug:
         print(TAG+"Updating the microprocessor\'s RTC with: {}, type: {}".format(t_dt, type(t_dt)))
@@ -100,9 +100,9 @@ def setup():
     print(TAG+"time.localtime() result: {}, type: {}".format(SYS_dt, type(SYS_dt)))
     SRAM_dt = convert( mcp.read_fm_SRAM() )
     print(TAG+"Contents of MCP7940 RTC\'s SRAM:",SRAM_dt)
-    print(TAG+"SYS_dt[yy]  = ", SYS_dt[yy] )
-    print(TAG+"RTC_dt[yy]  = ", RTC_dt[yy] )
-    print(TAG+"SRAM_dt[yy] = ", SRAM_dt[yy] )
+    print(TAG+"Microcontroller (time.localtime()) year  = ", SYS_dt[yy] )
+    print(TAG+"MCP7940_RTC datetime year                = ", RTC_dt[yy] )
+    print(TAG+"MCP7940_RTC datetime year read from SRAM = ", SRAM_dt[yy] )
     if SYS_dt[yy] == 2000:
         if RTC_dt[yy] >= 2020:
             mRTC_update = True

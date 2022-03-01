@@ -185,7 +185,7 @@ class MCP7940:
         """ Function added by @Paulskpt """
         dt = self._get_time()
         le = len(dt)
-        return dt[le-1:][0]  # dt[le-1:] results in tuple: (0,) so we have to extract the first element.
+        return dt[le-1:][0]+1  # dt[le-1:] results in tuple: (0,) so we have to extract the first element.
     
     def weekday_S(self):
         """ Function added by @Paulskpt """       
