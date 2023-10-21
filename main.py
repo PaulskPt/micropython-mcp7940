@@ -213,16 +213,6 @@ class State:
         self.tm_tmzone = None # was: 'Europe/Lisbon' # abbreviation of timezone name
         #tm_tmzone_dst = "WET0WEST,M3.5.0/1,M10.5.0"
         self.UTC_OFFSET = None
-        self.dt_dict = {
-            self.tm_year: 2023,
-            self.tm_mon: 10,
-            self.tm_mday: 4,
-            self.tm_hour: 16,
-            self.tm_min: 10,
-            self.tm_sec: 0,
-            self.tm_wday: 2,
-            self.tm_yday: 277,
-            self.tm_isdst: -1}
         self.alarm1 = ()
         self.alarm2 = ()
         self.alarm1_int = False
@@ -861,13 +851,7 @@ def get_dt_S(state):
         msg = ["Loop: "+str(state.loop_nr)+" of "+str(state.max_loop_nr), "", mcp.weekday_S(), " ", dt_s, " ", tm_s, " ", "yearday: "+str(yrday) ]
         pr_msg(state, msg)
     return ret
-    
-def pr_dt_SRAM(SRAM_dt_dict):
-    for _ in range(len(SRAM_dt_dict)):
-        t = SRAM_dt_dict[_]
-        for k,v in t.items():
-            print("\t\t{:10s}: {:4d}".format(k, v))
-    print()
+
     
 def clr_scrn():
     if use_sh1107:
