@@ -152,13 +152,6 @@ if len(devices) > 0:
         print("device nr {:d}, addres dec: {:3d}, addres hex: 0x{:02x}, {:s}".format(_+1, devices[_], devices[_], dev_dict[devices[_]]))
     print()
 
-
-
-conn_lst = []
-
-ssid = None
-wlan = None
-
 # See: https://www.epochconverter.com/
 # Values are for timezone Europe/Portugal
 dst = {
@@ -420,8 +413,8 @@ def neopixel_clr(state, clr):
             pixels.write()
 
 def do_connect(state):
-    global conn_lst, wlan, ssid, pw, pixels
     TAG = tag_adj(state, "do_connect(): ")
+    conn_lst = []
     #print(f"do_connect(): dir(wlan): {dir(wlan)}")
     
     # Load login data from different file for safety reasons
@@ -440,8 +433,8 @@ def do_connect(state):
         else:
             vf = wlist[0]
             if my_debug:
-                print(f"Vodafonr ap details:\n{vf}")
-                print("Data Vodafone access point")
+                print(f"WiFi access point details:\n{vf}")
+                print(f"Data access point \'{ssid}\'")
                 ap_detail_lst = ['ssid', 'bssid', 'channel', 'RSSI', 'security', 'hidden']
                 ap_security_lst = ['open', 'WEP', 'WPA-PSK', 'WPA2-PSK', 'WPA/WPA2-PSK']
                 for _ in range(len(vf)):
@@ -1127,7 +1120,7 @@ def main():
                 state.loop_nr += 1
                 if state.loop_nr > state.max_loop_nr:
                     neopixel_clr(state, state.BLK)
-                    print(TAG+f"Nr of runs: {state.loop_nr-1}. Exiting...\nThat\'s all folks!") #  "You now can make a copy of the REPL output")
+                    print(TAG+f"Nr of runs: {state.loop_nr-1}. Exiting...") #  "You now can make a copy of the REPL output")
                     if use_sh1107:
                         clr_scrn()
                         msg = ["That\'s all folks!",""]
