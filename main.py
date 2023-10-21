@@ -194,9 +194,14 @@ class State:
         self.mac = None
         self.use_neopixel = None
         self.neopixel_brightness = None
-        self.BLK = (0,0,0)
-        self.RED = (200,0,0)
-        self.GRN = (0,200,0)
+        self.neopixel_dict = {
+            "BLK": (0, 0, 0),
+            "RED": (200, 0, 0),
+            "GRN": (0, 200, 0)}
+        self.neopixel_rev_dict = {
+            (0, 0, 0)   : "BLK",
+            (200, 0, 0) : "RED",
+            (0, 200, 0) : "GRN"}
         self.curr_color_set = None
         # See: https://docs.python.org/3/library/time.html#time.struct_time
         self.tm_year = 0
@@ -393,14 +398,45 @@ def set_time():
         if my_debug:
             print(TAG+"not updating builtin RTC from NTP in this moment")
 
-def neopixel_clr(state, clr):
+def neopixel_color(state, color):
     global pixels
-    if clr in [state.GRN, state.RED, state.BLK]:
-        if neopixel  and not state.curr_color_set == clr:
-            state.curr_color_set = clr
-            r,g,b = clr  # feathers3.rgb_color_wheel( clr )
+    if color is None:
+        color = state.curr_color_set
+    elif not isinstance(color, str):
+        color = state.curr_color_set
+    
+    if color in state.neopixel_dict:
+        if neopixel  and not state.curr_color_set == color:
+            state.curr_color_set = color
+            r,g,b = state.neopixel_dict[color]  # feathers3.rgb_color_wheel( clr )
             pixels[0] = ( r, g, b, state.neopixel_brightness)
             pixels.write()
+            
+def neopixel_blink(state, color):
+    TAG = tag_adj(state, "neopixel_blink(): ")
+    global pixels
+    if color is None:
+        color = state.curr_color_set
+    elif not isinstance(color, str):
+        color = state.curr_color_set
+    
+    if color in state.neopixel_dict:
+        if neopixel:
+            if not my_debug:
+                print(TAG+f"going to blink color: \'{color}\'")
+            for _ in range(4):
+                if _ % 2 == 0:
+                    r, g, b = state.neopixel_dict[color]
+                else:
+                    r, g, b = state.neopixel_dict["BLK"]
+                pixels[0] = ( r, g, b, state.neopixel_brightness)
+                pixels.write()
+                utime.sleep(1)
+            # reset to color at start of this function
+            r, g, b = state.neopixel_dict[state.curr_color_set]
+            pixels[0] = ( r, g, b, state.neopixel_brightness)
+            pixels.write()
+                
 
 def do_connect(state):
     TAG = tag_adj(state, "do_connect(): ")
@@ -473,11 +509,13 @@ def do_connect(state):
         print(f"wlan.status() = {wlan.status()}")
     wstat = wlan.status()
     if wstat != 1010:
-        neopixel_clr(state, state.RED)
+        #neopixel_color(state, state.neopixel_dict["RED"])
+        neopixel_blink(state, "RED")
         print(TAG+f"Error: {wstat}")
         #raise RuntimeError('network connection failed')
     elif wstat == 1001:
-        neopixel_clr(state, state.RED)
+        #neopixel_color(state, state.neopixel_dict["RED"])
+        neopixel_blink(state, "RED")
         print(TAG+f"Error: {wstat}")
     else:
         if my_debug:
@@ -487,8 +525,8 @@ def do_connect(state):
         # print(TAG+f"wlan.STAT_CONNECTING: {wlan.STAT_CONNECTING}")
         print(TAG+f"WiFi connected to \'{ssid}\'")
         
-        neopixel_clr(state, state.GRN)
-        
+        #neopixel_color(state, state.neopixel_dict["GRN"])
+        neopixel_blink(state, "GRN")
         status = wlan.ifconfig()
         if len(conn_lst) > 0:
             s_ip = status[0]
@@ -936,7 +974,8 @@ def setup(state):
             
             state.neopixel_brightness = 0.005
 
-            neopixel_clr(state, state.BLK)
+            state.curr_color_set = "BLK"
+            neopixel_color(state, state.curr_color_set)
         except ValueError:
             pass
     
@@ -1103,7 +1142,7 @@ def main():
                 print()
                 state.loop_nr += 1
                 if state.loop_nr > state.max_loop_nr:
-                    neopixel_clr(state, state.BLK)
+                    neopixel_color(state, "BLK")
                     print(TAG+f"Nr of runs: {state.loop_nr-1}. Exiting...") #  "You now can make a copy of the REPL output")
                     if use_sh1107:
                         clr_scrn()
