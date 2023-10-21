@@ -424,14 +424,14 @@ def neopixel_blink(state, color):
         if neopixel:
             if not my_debug:
                 print(TAG+f"going to blink color: \'{color}\'")
-            for _ in range(4):
+            for _ in range(6):
                 if _ % 2 == 0:
                     r, g, b = state.neopixel_dict[color]
                 else:
                     r, g, b = state.neopixel_dict["BLK"]
                 pixels[0] = ( r, g, b, state.neopixel_brightness)
                 pixels.write()
-                utime.sleep(1)
+                utime.sleep(0.5)
             # reset to color at start of this function
             r, g, b = state.neopixel_dict[state.curr_color_set]
             pixels[0] = ( r, g, b, state.neopixel_brightness)

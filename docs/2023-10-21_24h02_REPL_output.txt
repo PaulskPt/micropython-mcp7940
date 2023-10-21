@@ -1,0 +1,234 @@
+Saturday 2023-10-21 23h02 utc+1
+
+by Paulus Schulinck (Github: @PaulskPt)
+
+Board: Unexpected Maker FeatherS3 (P4)
+flashed with micropython v1.21
+
+I2C devices connected:
+a) to STEMMA_HORIZONTAL: Unexpected Maker TinyPICO RTC Shield (MCP7940)
+b) to STEMMA_VERTICAL: Adafruit 1.12in 128x128 OLED mono display (SH1107)
+
+sh1107 driver from Peter-I5
+
+
+REPL output:
+
+
+
+>> %Run -c $EDITOR_CONTENT
+create mcp object try nr: 1
+mcp object created
+i2c devices present:
+device nr 1, addres dec:  61, addres hex: 0x3d, OLED display (SH1107)
+device nr 2, addres dec: 111, addres hex: 0x6f, RTC shield (MCP7940)
+
+setup():                  board unique_id: 84:f7:03:c0:65:40
+setup():                  MCP7940 power failure occurred? False
+setup():                  MCP7940 backup battery is not enabled
+setup():                  check: is_12hr: 1
+do_connect():             connecting to network...
+do_connect():             WiFi connected to 'xxxxx'
+neopixel_blink():         going to blink color: 'GRN'
+MYNTPTIME.ntp_time():     using host: '2.pt.pool.ntp.org'
+MYNTPTIME.ntp_time():     Error: [Errno 116] ETIMEDOUT. Waiting 15 seconds. Trying again, now using ntp server: '1.europe.pool.ntp.org'.
+MYNTPTIME.ntp_time():     using host: '2.pt.pool.ntp.org'
+MYNTPTIME.ntp_time():     msg rcvd from host ( showing just sliced part: list(msg[40:44]) ): [232, 222, 201, 12]
+set_time():               Succeeded to update the builtin RTC from an NTP server
+set_time():               mcp.time_has_set(): False
+set_time():               setting MCP7940 timekeeping regs to: (2023, 10, 21, 23, 2, 52, 5, 294)
+MCP7940.mcptime() setter: 23/10/21 23:2:52 (day=5)
+MCP7940.mcptime() setter: time check: (2023, 10, 21, 23, 2, 52, 5)
+set_time():               mcp is running
+setup():                  Microcontroller (utime.localtime()) year = 2023
+setup():                  MCP7940_RTC datetime year                = 2023
+setup():                  utime.localtime() result: (2023, 10, 21, 23, 2, 17, 5, 294)
+setup():                  MCP7940 RTC set to: (2023, 10, 21, 23, 2, 52, 5, 294)
+
+main():                   Test: saving and reading datetime data to/from MCP7940 SRAM
+get_dt_S():               return value: Saturday Oct 21 2023, 11:02:52 PM. Day of year: 294
+
+Loop: 1 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:02:52 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:02:52 PM. Day of year: 294
+
+Write to SRAM:
+Oct 21 2023
+11:02:56 PM
+wkday: Saturday
+is_12hr: 1
+is_PM: 1
+
+
+Read from SRAM:
+Oct 21 2023
+11:02:56 PM
+wkday: Saturday
+is_12hr: 1
+is_PM: 1
+Added: 
+yrday: 294
+dst: -1
+
+
+main():                   loop_nr: 1, t_elapsed: 14414 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:06 PM. Day of year: 294
+
+Loop: 1 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:06 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:06 PM. Day of year: 294
+
+main():                   loop_nr: 2, t_elapsed: 3786 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:10 PM. Day of year: 294
+
+Loop: 2 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:10 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:10 PM. Day of year: 294
+
+main():                   loop_nr: 3, t_elapsed: 3777 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:14 PM. Day of year: 294
+
+Loop: 3 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:14 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:14 PM. Day of year: 294
+
+main():                   loop_nr: 4, t_elapsed: 3776 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:18 PM. Day of year: 294
+
+Loop: 4 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:18 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:18 PM. Day of year: 294
+
+main():                   loop_nr: 5, t_elapsed: 3784 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:21 PM. Day of year: 294
+
+Loop: 5 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:21 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:21 PM. Day of year: 294
+
+main():                   loop_nr: 6, t_elapsed: 3778 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:25 PM. Day of year: 294
+
+Loop: 6 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:25 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:25 PM. Day of year: 294
+
+main():                   loop_nr: 7, t_elapsed: 3786 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:29 PM. Day of year: 294
+
+Loop: 7 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:29 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:29 PM. Day of year: 294
+
+main():                   loop_nr: 8, t_elapsed: 3776 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:33 PM. Day of year: 294
+
+Loop: 8 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:33 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:33 PM. Day of year: 294
+
+main():                   loop_nr: 9, t_elapsed: 3778 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:37 PM. Day of year: 294
+
+Loop: 9 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:37 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:37 PM. Day of year: 294
+
+main():                   loop_nr: 10, t_elapsed: 3784 mSec
+get_dt_S():               return value: Saturday Oct 21 2023, 11:03:40 PM. Day of year: 294
+
+Loop: 10 of 10
+
+Saturday
+ 
+Oct 21 2023
+ 
+11:03:40 PM
+ 
+yearday: 294
+
+main():                   Current MCP7940 RTC datetime: Saturday Oct 21 2023, 11:03:40 PM. Day of year: 294
+
+main():                   Nr of runs: 10. Exiting...
+
+That's all folks!
