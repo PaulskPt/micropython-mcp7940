@@ -21,11 +21,11 @@ except:
 my_debug = False
 
 ntp_servers_dict = {
-    0: "2.pt.pool.ntp.org",
+	0: "2.pt.pool.ntp.org",
 	1: "1.europe.pool.ntp.org",
 	2: "3.europe.pool.ntp.org",
-    3: "0.adafruit.pool.ntp.org"}
-    # 4: "ntp.pool.ntp.org"
+	3: "0.adafruit.pool.ntp.org"}
+	# 4: "ntp.pool.ntp.org"
 
 
 class MYNTPTIME:
