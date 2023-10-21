@@ -8,6 +8,9 @@ Alarms have been implemented. They have successfully been tested (see my Circuit
 
 The main.py script makes use of functions of the MCP7940 class to write and read datetime stamps to and from the MCP7940 SRAM user space
 
+## WiFi
+In file secrets.py add your ssid and password
+
 ## Example usage
 
 ```python
