@@ -124,6 +124,7 @@ class MYNTPTIME:
         self.host_idx += 1
         if self.host_idx >= le:
             self.host_idx = 0
+        self.host = ntp_servers_dict[self.host_idx]
 
 
 
