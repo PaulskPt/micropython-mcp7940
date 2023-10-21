@@ -65,7 +65,7 @@ class MYNTPTIME:
                         s.close()
                     return -1
                 self.next_host()
-                print(TAG+f"Error: {e}. Waiting 15 seconds. Trying again, now using ntp server: \'{ntp_servers_dict[self.host_idx]}\'.")
+                print(TAG+f"Error: {e}. Waiting 15 seconds. Trying again. Going to use ntp server: \'{ntp_servers_dict[self.host_idx]}\'.")
                 utime.sleep(15)
             finally:
                 if s:
