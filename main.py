@@ -293,12 +293,6 @@ def read_fm_config(state):
 
 save_config()
 
-# modified to use Portugues ntp host
-#host = "0.adafruit.pool.ntp.org" # was: "pt.pool.ntp.org" # mod by @PaulskPt
-
-host = ntp.get_host() # "pt.pool.ntp.org" # mod by @PaulskPt
-
-
 def is_dst():
     t = utime.time()
     yr = utime.localtime(t)[0]
@@ -391,7 +385,7 @@ def set_time():
                 mRTC().datetime((tm[state.tm_year], tm[state.tm_mon], tm[state.tm_mday], tm[state.tm_wday] + 1,
                     tm[state.tm_hour], tm[state.tm_min], tm[state.tm_sec], 0))
             if my_debug and tm is not None:
-                print(TAG+"date/time updated from: \"{}\"".format(host))
+                print(TAG+"date/time updated from: \"{}\"".format(ntp.get_host()))
         else:
             print(TAG+"failed to update builtin RTC from an NTP server")
     else:
@@ -963,7 +957,7 @@ def tag_adj(state,t):
     return ""
 
 def setup(state):
-    global SYS_update, mRTC, host, config, neopixel_pin
+    global SYS_update, config
     TAG = tag_adj(state, "setup(): ")
     s_mcp = "MCP7940"
     
