@@ -493,13 +493,11 @@ def do_connect(state):
                 print()
     #print(TAG+f"list of ap\'s: {wlist[0][1]}")
     #wlan.AUTH_WPA2_PSK
-    is_connected = False
     print(TAG+'connecting to WiFi network...')
     if not wlan.isconnected():
         wlan.connect(ssid, pw, timeout=5000)
         while not wlan.isconnected():
             idle()  # save power while waiting
-    
     if wlan.isconnected():
         print(TAG+f"WiFi connected to \'{ssid}\'")
         status = wlan.ifconfig()
@@ -507,7 +505,6 @@ def do_connect(state):
             s_ip = status[0]
             print(TAG+f"ip: {s_ip}")
         neopixel_blink(state, "GRN")
-        
     else:
         print(TAG+f"WiFi failed to connect to \'{ssid}\'")
         neopixel_blink(state, "RED")
@@ -550,8 +547,6 @@ def do_connect(state):
             print()
     """
 
-    
-    
 # When a call to mcp.is_12hr() is positive,
 # the hours will be changed from 24 to 12 hour fomat:
 # AM/PM will be added to the datetime stamp
