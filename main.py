@@ -27,7 +27,7 @@
 # to not cause error replies from the NTP server.
 #
 from mcp7940 import MCP7940
-from machine import Pin, SoftI2C, RTC, unique_id   # Note I2C is deprecated!
+from machine import Pin, SoftI2C, RTC, unique_id, idle   # Note I2C is deprecated!
 import utime
 import network
 import socket
@@ -440,18 +440,18 @@ def neopixel_blink(state, color):
 
 def do_connect(state):
     TAG = tag_adj(state, "do_connect(): ")
-    conn_lst = []
-    #print(f"do_connect(): dir(wlan): {dir(wlan)}")
+    #print(TAG+f"dir(wlan): {dir(wlan)}")
     
+    wlan = network.WLAN(network.STA_IF)
     # Load login data from different file for safety reasons
     ssid = secrets['ssid']
     pw = secrets['pw']
-    wlan = network.WLAN(network.STA_IF)
+    s_ip = ""
     wlan.active(True)
     wlist = wlan.scan()
-    s_ip = ""
+
     if my_debug:
-        print(TAG+f"type(wlist): {type(wlist)}")
+        print(TAG+f"type(wlist): {type(wlist)}, wlist: {wlist}")
     if isinstance(wlist, list):
         le = len(wlist)
         if le == 0:
@@ -493,20 +493,37 @@ def do_connect(state):
                 print()
     #print(TAG+f"list of ap\'s: {wlist[0][1]}")
     #wlan.AUTH_WPA2_PSK
-    print(TAG+'connecting to network...')
-    wlan.connect(ssid, pw)
+    is_connected = False
+    print(TAG+'connecting to WiFi network...')
+    if not wlan.isconnected():
+        wlan.connect(ssid, pw, timeout=5000)
+        while not wlan.isconnected():
+            idle()  # save power while waiting
+    
+    if wlan.isconnected():
+        print(TAG+f"WiFi connected to \'{ssid}\'")
+        status = wlan.ifconfig()
+        if len(status) > 0:  # was: if len(conn_lst) > 0:
+            s_ip = status[0]
+            print(TAG+f"ip: {s_ip}")
+        neopixel_blink(state, "GRN")
+        
+    else:
+        print(TAG+f"WiFi failed to connect to \'{ssid}\'")
+        neopixel_blink(state, "RED")
     
     # See: https://stackoverflow.com/questions/75972383/while-running-wlan-status-command-on-esp32-it-is-giving-value-of-1010-instead
+    """
     STAT_CONNECTING = 1010
     max_wait = 10
     while max_wait > 0:
         if wlan.status() < 0 or wlan.status() >= 3:
             break
         max_wait -= 1
-        print('waiting for connection...')
+        print(TAG+'waiting for connection...')
         utime.sleep(1)
     if my_debug:
-        print(f"wlan.status() = {wlan.status()}")
+        print(TAG+f"wlan.status() = {wlan.status()}")
     wstat = wlan.status()
     if wstat != 1010:
         #neopixel_color(state, state.neopixel_dict["RED"])
@@ -527,11 +544,13 @@ def do_connect(state):
         
         #neopixel_color(state, state.neopixel_dict["GRN"])
         neopixel_blink(state, "GRN")
-        status = wlan.ifconfig()
         if len(conn_lst) > 0:
             s_ip = status[0]
             print(f"ip: {s_ip}")
             print()
+    """
+
+    
     
 # When a call to mcp.is_12hr() is positive,
 # the hours will be changed from 24 to 12 hour fomat:
