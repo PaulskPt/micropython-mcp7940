@@ -493,7 +493,7 @@ def do_connect(state):
         while not wlan.isconnected():
             idle()  # save power while waiting
     if wlan.isconnected():
-        print(TAG+f"WiFi connected to \'{ssid}\'")
+        # print(TAG+f"WiFi connected to \'{ssid}\'")
         msg = ["WiFi","", "connected to", "", ssid]
         pr_msg(state, msg)
         status = wlan.ifconfig()
