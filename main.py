@@ -100,7 +100,7 @@ mcp = None
 
 while True:
     try:
-        mcp = MCP7940(i2c0)
+        mcp = MCP7940(i2c0, battery_enabled=True)
         print(f"create mcp object try nr: {cnt+1}")
         cnt += 1
         if mcp is not None:
@@ -494,12 +494,14 @@ def do_connect(state):
             idle()  # save power while waiting
     if wlan.isconnected():
         # print(TAG+f"WiFi connected to \'{ssid}\'")
-        msg = ["WiFi","", "connected to", "", ssid]
-        pr_msg(state, msg)
+
         status = wlan.ifconfig()
         if len(status) > 0:  # was: if len(conn_lst) > 0:
             s_ip = status[0]
             print(TAG+f"ip: {s_ip}")
+            state.s__ip = s_ip
+        msg = ["WiFi","", "connected to", "", ssid, "", "ip:", state.s__ip]
+        pr_msg(state, msg)
         neopixel_blink(state, "GRN")
     else:
         print(TAG+f"WiFi failed to connect to \'{ssid}\'")
@@ -1106,6 +1108,13 @@ def main():
     
     while True:
         try:
+            usb_pwr = feathers3.get_vbus_present()
+            if usb_pwr:
+                s_pwr ="USB"
+            else:
+                s_pwr ="battery"
+            msg = ["we are on:","", s_pwr+" power"]
+            pr_msg(state, msg)
             t = utime.localtime()
             #     yr,   mo, dd, hh, mm, ss, wd, yd, dst
             #t = (2022, 10, 30, 2, 10, 0,  0,  201, -1)  # For testing purposes
@@ -1117,7 +1126,7 @@ def main():
                 led.on()
                 dst = "Yes" if is_dst() else "No"
                 t2 = "\nLocal date/time: {} {}-{:02d}-{:02d}, {:02d}:{:02d}:{:02d}, day of the year: {}. DST: {}".format(state.mRTC_DOW[t[state.tm_wday]], t[state.tm_year],
-                    t[state.tm_mon], t[state.tm_mday], t[state.state.tm_hour], t[state.tm_min], t[state.tm_sec], t[state.tm_yday], dst)
+                    t[state.tm_mon], t[state.tm_mday], t[state.tm_hour], t[state.tm_min], t[state.tm_sec], t[state.tm_yday], dst)
                 print(t2)
             rd_sram = True
             if not rd_sram:
