@@ -71,7 +71,7 @@ class MCP7940:
     
     ADDRESS = const(0x6F)  # '11001111'
     RTCSEC = 0x00 # RTC seconds register
-    ST = 7  # Status bit
+    ST = 7  # Start Status bit
     RTCWKDAY = 0x03  # RTC Weekday register
     VBATEN = 3  # External battery backup supply enable bit
     
@@ -104,6 +104,8 @@ class MCP7940:
     PWRMTH = 0x03 # reg 0x1F
     PWRFAIL_BIT = 4
     OSCRUN_BIT = 5
+    _12HR_BIT = 6
+    AMPM_BIT = 5
     ALARM0EN_BIT = 4 
     ALARM1EN_BIT = 5
     SQWEN_BIT = 6
@@ -166,6 +168,8 @@ class MCP7940:
         self.sbf = "calling self._set_bit() failed"
         self.rbf = "calling self._read_bit() failed"
         self.gtf = "calling self._mcpget_time() failed"
+        self._status = status
+        self._battery_enabled = battery_enabled
         
     def has_pwr_failed(self):
         ret = True if self._read_bit(MCP7940.PWR_FAIL_REG, MCP7940.PWRFAIL_BIT) else False
@@ -239,6 +243,8 @@ class MCP7940:
     """ Function modified by @Paulskpt """
     def battery_backup_enable(self, enable):
         TAG = MCP7940.CLS_NAME+".battery_backup_enable(): "
+        if enable is None:
+            enable = self.battery_enabled  # use the value set at __init__()
         ret = self._set_bit(MCP7940.RTCWKDAY, MCP7940.VBATEN, enable)
         if ret == -1:
             if my_debug:
@@ -304,8 +310,13 @@ class MCP7940:
         time_reg = [seconds, minutes, hours, weekday, date, month, year % 100]
 
         # Add ST (status) bit
-
+        # is not needed. The setting of the timekeeping registers
+        # contains calls to self.stop() and self.start()
+            
         # Add VBATEN (battery enable) bit
+        if self.battery_backup_enable:
+            time_reg[MCP7940.RTCWKDAY] |= 0x08  # Set the VBATEN bit (bit 3)
+        
         if not my_debug:
             print(
                 TAG+"{}/{}/{} {}:{}:{} (day={})".format(
@@ -447,7 +458,9 @@ class MCP7940:
         else:
             is_12hr = self.is_12hr()
         if is_12hr:
-            bit = 5
+            bit = MCP7940.AMPM_BIT
+            dt = self.mcptime
+            hh = dt[self.TM_HOUR]
             reg = MCP7940.RTCHOUR
             ret = self._read_bit(reg, bit)
             if ret == -1:

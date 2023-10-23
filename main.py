@@ -33,7 +33,7 @@ import network
 import socket
 #import time
 import struct
-import sys
+import sys, gc
 from secrets import secrets
 import ubinascii
 import json
@@ -72,7 +72,6 @@ use_sh1107 = True  #                     |
 MCP7940_RTC_update = True  # Set to True to update the MCP7940 RTC datetime values (in function set_time())
 use_TAG = True
 
-ntp_last_sync_dt = 0
 SYS_update = False
 
 led = Pin("LED_BLUE", Pin.OUT)
@@ -172,6 +171,7 @@ state = None
 class State:
     def __init__(self, saved_state_json=None):
         self.board_id = None
+        self.wlan = None
         self.lStart = True
         self.loop_nr = -1
         self.max_loop_nr = 10
@@ -183,6 +183,7 @@ class State:
         self.set_EXT_RTC = True # Set to True to update the MCP7940 RTC datetime values (and set the values of dt_dict below)
         self.EXT_RTC_is_set = False
         self.save_dt_fm_int_rtc = False  # when save_to_SRAM, save datetime from INTernal RTC (True) or EXTernal RTC (False)
+        self.ntp_last_sync_dt = 0
         self.dt_str_usa = True
         self.MCP_dt = None
         self.ntp_server_idx = 0 # see ntp_servers_dict
@@ -304,16 +305,15 @@ def is_dst():
         print("year: {} not in dst dictionary ({}).\nUpdate the dictionary! Exiting...".format(yr, dst.keys()))
         raise SystemExit
     
-def can_update_fm_NTP():
-    global ntp_last_sync_dt
+def can_update_fm_NTP(state):
     TAG = tag_adj(state, "can_update_fm_NTP(): ")
     ret = False
     if my_debug:
-        print(TAG+f"last NTP sync: {ntp_last_sync_dt}")
-    if ntp_last_sync_dt == 0:  # we did not NTP sync yet
+        print(TAG+f"last NTP sync: {state.ntp_last_sync_dt}")
+    if state.ntp_last_sync_dt == 0:  # we did not NTP sync yet
         return True   # yes go to do NTP sync
     else:
-        t1 = ntp_last_sync_dt
+        t1 = state.ntp_last_sync_dt
         while True:
             t2 = utime.time() - state.UTC_OFFSET
             if t2 >= t1:
@@ -327,13 +327,13 @@ def can_update_fm_NTP():
     return ret
          
 
-def set_time():
-    global ntp_last_sync_dt, SYS_update, config
+def set_time(state):
+    global SYS_update, config
     TAG = tag_adj(state, "set_time(): ")
     try_cnt = 0
     good_NTP = False
     tm = None
-    if can_update_fm_NTP():
+    if can_update_fm_NTP(state):
         if my_debug:
             print(TAG+"synchronizing builtin RTC from NTP server, waiting...")
         try_cnt = 0
@@ -358,9 +358,9 @@ def set_time():
                     raise
         if good_NTP:
             print(TAG+"Succeeded to update the builtin RTC from an NTP server")
-            ntp_last_sync_dt = utime.time() # get the time serial
+            state.ntp_last_sync_dt = utime.time() # get the time serial
             if my_debug:
-                print(TAG+f"Updating ntp_last_sync_dt to: {ntp_last_sync_dt}")
+                print(TAG+f"Updating ntp_last_sync_dt to: {state.ntp_last_sync_dt}")
             tm = utime.localtime(utime.time() + state.UTC_OFFSET)
             
             ths = mcp.time_has_set()
@@ -436,7 +436,7 @@ def do_connect(state):
     TAG = tag_adj(state, "do_connect(): ")
     #print(TAG+f"dir(wlan): {dir(wlan)}")
     
-    wlan = network.WLAN(network.STA_IF)
+    wlan = state.wlan # was: wlan = network.WLAN(network.STA_IF)
     # Load login data from different file for safety reasons
     ssid = secrets['ssid']
     pw = secrets['pw']
@@ -487,11 +487,14 @@ def do_connect(state):
                 print()
     #print(TAG+f"list of ap\'s: {wlist[0][1]}")
     #wlan.AUTH_WPA2_PSK
-    print(TAG+'connecting to WiFi network...')
+
     if not wlan.isconnected():
+        print(TAG+'connecting to WiFi network...')
         wlan.connect(ssid, pw)
         while not wlan.isconnected():
             idle()  # save power while waiting
+    else:
+        print(TAG+f"WiFi already connected")
     if wlan.isconnected():
         # print(TAG+f"WiFi connected to \'{ssid}\'")
 
@@ -961,7 +964,7 @@ def tag_adj(state,t):
     return ""
 
 def setup(state):
-    global SYS_update, config
+    global SYS_update, config, wifi
     TAG = tag_adj(state, "setup(): ")
     s_mcp = "MCP7940"
     
@@ -981,6 +984,14 @@ def setup(state):
     
     if state.board_id == s_id:
         try:
+            usb_pwr = feathers3.get_vbus_present()
+            if usb_pwr:
+                s_pwr ="USB"
+            else:
+                s_pwr ="battery"
+            msg = ["we are on:","", s_pwr+" power"]
+            
+            pr_msg(state, msg)
             # Turn on the power to the NeoPixel
             feathers3.set_ldo2_power(True)
             
@@ -991,6 +1002,15 @@ def setup(state):
         except ValueError:
             pass
     
+    wlan = network.WLAN(network.STA_IF)
+    state.wlan = wlan
+    
+    do_connect(state)
+    
+    if wlan.isconnected():
+        set_time(state)  # call at start  
+        gc.collect()
+
     state.MCP_dt = mcp.mcptime
     state.SYS_dt = utime.localtime()
     state.SRAM_dt = None  #see setup()
@@ -1052,10 +1072,8 @@ def setup(state):
             save_config()
         
         print(TAG+f"check: is_12hr: {is_12hr}")
-    
-    do_connect(state)
-
-
+        
+      
     if my_debug:
         upd_SRAM(state)
 
@@ -1080,8 +1098,7 @@ def setup(state):
                 print(TAG+"failed to start the oscillator of the MCP7940 RTC")
         else:
             print(TAG+"unable to read the start bit")
-            
-    set_time()  # call at start
+
     
     print(TAG+f"Microcontroller (utime.localtime()) year = {state.SYS_dt[state.tm_year]}")
     print(TAG+f"MCP7940_RTC datetime year                = {state.MCP_dt[state.tm_year]}")
@@ -1095,7 +1112,7 @@ def main():
     read_fm_config(state)
     setup(state)
     t = utime.localtime()  
-    o_hour = t[state.tm_hour] # Set hour for set_time() call interval
+    o_hour = t[state.tm_hour] # Set hour for set_time(state) call interval
     o_sec = t[state.tm_sec]
     t_start = utime.ticks_ms()
     state.loop_nr = 1
@@ -1108,19 +1125,13 @@ def main():
     
     while True:
         try:
-            usb_pwr = feathers3.get_vbus_present()
-            if usb_pwr:
-                s_pwr ="USB"
-            else:
-                s_pwr ="battery"
-            msg = ["we are on:","", s_pwr+" power"]
-            pr_msg(state, msg)
             t = utime.localtime()
             #     yr,   mo, dd, hh, mm, ss, wd, yd, dst
             #t = (2022, 10, 30, 2, 10, 0,  0,  201, -1)  # For testing purposes
             if o_hour != t[state.tm_hour]:
                 o_hour = t[state.tm_hour] # remember current hour
-                set_time()
+                set_time(state)
+                gc.collect()
             if o_sec != t[state.tm_sec]:
                 o_sec = t[state.tm_sec] # remember current second
                 led.on()
@@ -1167,6 +1178,7 @@ def main():
                         clr_scrn()
                         msg = ["That\'s all folks!",""]
                         pr_msg(state, msg)
+                    gc.collect()
                     sys.exit() # stop to give user oppertunity to copy REPL output.
 
 if __name__ == '__main__':
