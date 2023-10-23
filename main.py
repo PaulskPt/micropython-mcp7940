@@ -489,7 +489,7 @@ def do_connect(state):
     #wlan.AUTH_WPA2_PSK
     print(TAG+'connecting to WiFi network...')
     if not wlan.isconnected():
-        wlan.connect(ssid, pw, timeout=5000)
+        wlan.connect(ssid, pw)
         while not wlan.isconnected():
             idle()  # save power while waiting
     if wlan.isconnected():
