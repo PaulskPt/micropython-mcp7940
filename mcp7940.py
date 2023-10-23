@@ -353,13 +353,15 @@ class MCP7940:
         try:
             self._i2c.writeto_mem(MCP7940.ADDRESS, MCP7940.CONTROL_REGISTER, bt)
             # We check the result
+            # AM/PM bit is updated with the call to self._mcpget_time()
             time_ck = self._mcpget_time(MCP7940.CONTROL_REGISTER)
             print(TAG+f"time check: {time_ck}")
             if len(time_ck) > 1 and time_ck[0] > 2001:  # we expect a datetime that is > 2001 (= 1)
                 self.time_is_set = True  # set flag
                 self.last_time_set = time_ck
+                            
             #time.sleep(3)
-    
+        
         except OSError as e:
             print(TAG+f"Error: {e}")
             return -1
@@ -404,7 +406,7 @@ class MCP7940:
     """ Function added by @Paulskpt """
     def is_12hr(self):
         TAG = MCP7940.CLS_NAME+".is_12hr(): "
-        bit = 6
+        bit = MCP7940._12HR_BIT
         ret = 0
         reg = MCP7940.RTCHOUR
         if self._is_12hr == -1:
@@ -420,31 +422,43 @@ class MCP7940:
         return ret
     
     # Set the AMPM bit if the 12hr bit is set
+    # When param isPM is None then the function
+    # will read self.mcptime and 
+    # extract the hours value to discern AM/PM
     """ Function added by @Paulskpt """
-    def set_PM(self, isPM=None):
+    def set_PM(self, hour):
         TAG = MCP7940.CLS_NAME+".set_PM(): "
         ret = -1
         ret2 = 0
-        if isPM is None:
-            return ret
-        if not isinstance(isPM, bool):
-            return ret
-        
+        value = None
+        # if isPM is None:
+        #    return ret
+        # if not isinstance(isPM, bool):
+        #    return ret
         if self._is_12hr > -1:
             is_12hr = self._is_12hr
         else:
             is_12hr = self.is_12hr()
         if is_12hr:
-            bit = 5
+            if hour is None:
+                hour = self.mcptime[3]
+                value = 1 if hour >= 12 else 0
+            elif not isinstance(hour, int):
+                hour = self.mcptime[3]
+                value = 1 if hour >= 12 else 0
+            elif isinstance(hour, int):
+                value = 1 if hour >= 12 else 0
+            if my_debug:
+                print(TAG+f"hour: {hour}, AM/PM value to set: {value}")
             reg = MCP7940.RTCHOUR
-            value = 1 if isPM else 0
+            bit = MCP7940.AMPM_BIT
             ret2 = self._set_bit(reg, bit, value)
             if ret2 == -1:
                 if my_debug:
                     print(TAG+self.sbf)
             else:
                 if my_debug:
-                    print(TAG+f"set_PM(): value set: {value}")
+                    print(TAG+f"value set: {value}")
         return ret2                    
     
     # Return the AMPM bit is the 12hr bit is set
@@ -459,8 +473,6 @@ class MCP7940:
             is_12hr = self.is_12hr()
         if is_12hr:
             bit = MCP7940.AMPM_BIT
-            dt = self.mcptime
-            hh = dt[self.TM_HOUR]
             reg = MCP7940.RTCHOUR
             ret = self._read_bit(reg, bit)
             if ret == -1:
@@ -1026,6 +1038,9 @@ class MCP7940:
         # now = (2019, 7, 16, 15, 29, 14, 6, 167)  # Sunday 2019/7/16 3:29:14pm (yearday=167)
         # year, month, date, hours, minutes, seconds, weekday, yearday = t
         # time_reg = [seconds, minutes, hours, weekday, date, month, year % 100]
+        
+        # update AM/PM bit
+        self.set_PM(t[MCP7940.RTCHOUR])
 
         if my_debug:
             print(TAG+f"returning result t3: {t3}")

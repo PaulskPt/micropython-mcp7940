@@ -359,10 +359,9 @@ def set_time(state):
         if good_NTP:
             print(TAG+"Succeeded to update the builtin RTC from an NTP server")
             state.ntp_last_sync_dt = utime.time() # get the time serial
-            if my_debug:
+            if not my_debug:
                 print(TAG+f"Updating ntp_last_sync_dt to: {state.ntp_last_sync_dt}")
             tm = utime.localtime(utime.time() + state.UTC_OFFSET)
-            
             ths = mcp.time_has_set()
             print(TAG+f"mcp.time_has_set(): {ths}")
             if not ths:
