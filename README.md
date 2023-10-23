@@ -62,6 +62,6 @@ contents of the file mcp7940.py in the ```micropython-mcp7940``` repo
 by Unexpected Maker (https://github.com/tinypico/micropython-mcp7940).
 
 ## WebREPL
-In the folder images you'll find an image of using WebREPL. This works OK even when the Feather and the two I2C devices are powered from a Lipo battery.
+In the folder images you'll find an image of using WebREPL. This works OK even when the FeatherS3 and the two I2C devices are powered from a Lipo battery.
 When the script has finished you can restart the script from WebREPL by issuing the command: 'main()+[Enter]'
 
