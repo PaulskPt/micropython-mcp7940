@@ -32,9 +32,9 @@ WiFi
 
 connected to
 
-Vodafone-8D96F1
+Vodafone-xxxxx
 
-do_connect():             ip: 192.168.1.104
+do_connect():             ip: 192.168.x.xxx
 neopixel_blink():         going to blink color: 'GRN'
 MYNTPTIME.ntp_time():     using host: '2.pt.pool.ntp.org'
 MYNTPTIME.ntp_time():     msg rcvd from host ( showing just sliced part: list(msg[40:44]) ): [232, 223, 147, 248]
