@@ -1035,11 +1035,9 @@ class MCP7940:
         t = [self.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)]
         # Reorder
         
+        hh = t[MCP7940.RTCHOUR]
         if self._is_12hr:
-            hh = t[MCP7940.RTCHOUR]
             hh &= 0x1F  # mask 12/24 bit and mask AM/PM bit
-        else:
-            hh = t[MCP7940.RTCHOUR]
         
         if my_debug:
             print(TAG+f"length t: {t}")
