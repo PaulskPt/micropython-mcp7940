@@ -582,10 +582,16 @@ class MCP7940:
     def bcd_to_int(self, bcd):
         """ Expects a byte encoded with 2x 4bit BCD values. """
         # Alternative using conversions: int(str(hex(bcd))[2:])
-        return (bcd & 0xF) + (bcd >> 4) * 10 
+        ret = (bcd & 0xF) + (bcd >> 4) * 10
+        if my_debug:
+            print(MCP7940.CLS_NAME+"bcd_to_int(): "+"bcd: {:2d}, int: {:02d}".format(bcd, ret))
+        return ret
 
     def int_to_bcd(self, i):
-        return (i // 10 << 4) + (i % 10)
+        ret = (i // 10 << 4) + (i % 10)
+        if my_debug:
+            print(MCP7940.CLS_NAME+"int_to_bcd(): "+"int: {:2d}, bcd: {:02d}".format(i, ret))
+        return ret
 
     """ https://stackoverflow.com/questions/725098/leap-year-calculation """
     def is_leap_year(self, year):
