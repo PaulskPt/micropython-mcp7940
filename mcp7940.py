@@ -312,10 +312,6 @@ class MCP7940:
         # Add ST (status) bit
         # is not needed. The setting of the timekeeping registers
         # contains calls to self.stop() and self.start()
-            
-        # Add VBATEN (battery enable) bit
-        if self.battery_backup_enable:
-            time_reg[MCP7940.RTCWKDAY] |= 0x08  # Set the VBATEN bit (bit 3)
         
         if not my_debug:
             print(
@@ -329,6 +325,13 @@ class MCP7940:
                     time_reg[MCP7940.RTCWKDAY],
                 )
             )
+            
+        # Add VBATEN (battery enable) bit
+        if self._battery_enabled:
+            res = self.battery_backup_enable(True)
+            if res > -1:
+                if not my_debug:
+                    print(TAG+f"battetery backup enable result: {res}")
         
         #print(time_reg)
         reg_filter = (0x7F, 0x7F, 0x3F, 0x07, 0x3F, 0x3F, 0xFF)
@@ -1031,16 +1034,23 @@ class MCP7940:
             print(reg_filter)
         t = [self.bcd_to_int(reg & filt) for reg, filt in zip(time_reg, reg_filter)]
         # Reorder
+        
+        if self._is_12hr:
+            hh = t[MCP7940.RTCHOUR]
+            hh &= 0x1F  # mask 12/24 bit and mask AM/PM bit
+        else:
+            hh = t[MCP7940.RTCHOUR]
+        
         if my_debug:
             print(TAG+f"length t: {t}")
-        t2 = (t[MCP7940.RTCMTH], t[MCP7940.RTCDATE], t[MCP7940.RTCHOUR], t[MCP7940.RTCMIN], t[MCP7940.RTCSEC], t[MCP7940.RTCWKDAY])
+        t2 = (t[MCP7940.RTCMTH], t[MCP7940.RTCDATE], hh, t[MCP7940.RTCMIN], t[MCP7940.RTCSEC], t[MCP7940.RTCWKDAY])
         t3 = (t[MCP7940.RTCYEAR] + 2000,) + t2 if num_registers == 7 else t2
         # now = (2019, 7, 16, 15, 29, 14, 6, 167)  # Sunday 2019/7/16 3:29:14pm (yearday=167)
         # year, month, date, hours, minutes, seconds, weekday, yearday = t
         # time_reg = [seconds, minutes, hours, weekday, date, month, year % 100]
         
         # update AM/PM bit
-        self.set_PM(t[MCP7940.RTCHOUR])
+        self.set_PM(hh)
 
         if my_debug:
             print(TAG+f"returning result t3: {t3}")

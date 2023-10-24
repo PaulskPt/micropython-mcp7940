@@ -332,6 +332,16 @@ def set_time(state):
     good_NTP = False
     tm = None
     if can_update_fm_NTP(state):
+        tm_mcp = mcp.mcptime
+        mcp_dt = list(tm_mcp)  # create a list (which is mutable)
+        mcp_dt_hh = mcp_dt[state.tm_hour]
+        lcl_dt = utime.localtime(utime.time() + state.UTC_OFFSET)
+        lcl_dt_hh = lcl_dt[state.tm_hour]
+        # During a long sleep time it happened that the MCP7940 clock was not updated(updating)
+        # In that case the MCP7940 timekeeping registers have to be updated
+        # So, if the flag state.NTP_dt_is_set already had been set, it has to be reset.
+        if lcl_dt_hh != mcp_dt_hh:
+            state.NTP_dt_is_ist = False
         if my_debug:
             print(TAG+"synchronizing builtin RTC from NTP server, waiting...")
         try_cnt = 0
@@ -899,15 +909,23 @@ def get_dt_S(state):
             s_PM = "AM"
     else:
         s_PM = ""
-    if my_debug:
+    if not my_debug:
         print(TAG+f"mcp.mcptime: {mcp_dt}")
-    dt_s = "{:3s} {:02d} {:4d}".format(state.month_dict[mcp_dt[state.tm_mon]], mcp_dt[state.tm_mday], mcp_dt[state.tm_year])
-    tm_s = "{:d}:{:02d}:{:02d} {:2s}".format(mcp_dt[state.tm_hour], mcp_dt[state.tm_min], mcp_dt[state.tm_sec], s_PM)
-    ret = "{} {}, {}. Day of year: {:>3d}".format(mcp.weekday_S(), dt_s, tm_s, yrday)
+    try:
+        dt_s = "{:3s} {:02d} {:4d}".format(state.month_dict[mcp_dt[state.tm_mon]], mcp_dt[state.tm_mday], mcp_dt[state.tm_year])
+        tm_s = "{:d}:{:02d}:{:02d} {:2s}".format(mcp_dt[state.tm_hour], mcp_dt[state.tm_min], mcp_dt[state.tm_sec], s_PM)
+        ret = "{} {}, {}. Day of year: {:>3d}".format(mcp.weekday_S(), dt_s, tm_s, yrday)
+        wd = mcp.weekday_S()
+        yd = str(yrday)
+    except KeyError as e:
+        print(TAG+f"Error: {e}")
+        ret = ""
+        wd = ""
+        yd = ""
     if my_debug:
         print(TAG+f"return value: {ret}")
     if use_sh1107:
-        msg = ["Loop: "+str(state.loop_nr)+" of "+str(state.max_loop_nr), "", mcp.weekday_S(), " ", dt_s, " ", tm_s, " ", "yearday: "+str(yrday) ]
+        msg = ["Loop: "+str(state.loop_nr)+" of "+str(state.max_loop_nr), "", wd, " ", dt_s, " ", tm_s, " ", "yearday: "+yd ]
         pr_msg(state, msg)
     return ret
 
@@ -1042,7 +1060,8 @@ def setup(state):
             
     pf = mcp.has_pwr_failed()
     if pf > -1:
-        print(TAG+f"MCP7940 power failure occurred? {pf}")
+        spf = "Yes" if pf else "No"
+        print(TAG+f"MCP7940 power failure occurred? {spf}")
         if pf:
             mcp.clr_pwr_fail_bit()
             pwrup = mcp.pwr_updn_dt(True)
@@ -1056,7 +1075,7 @@ def setup(state):
     if bbe > -1:
         s = "" if bbe else " not"
         print(TAG+f"{s_mcp} backup battery is{s} enabled")
-        """
+
         if not bbe:
             print(TAG+"going to enable")
             mcp.battery_backup_enable(True)
@@ -1065,7 +1084,6 @@ def setup(state):
                 print(TAG+"backup battery is now enabled")
             else:
                 print(TAG+"failed to enable backup battery")
-        """
     else:
         print(TAG+"Unable to read the battery backup enable bit")
     
