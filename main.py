@@ -72,8 +72,6 @@ use_sh1107 = True  #                     |
 MCP7940_RTC_update = True  # Set to True to update the MCP7940 RTC datetime values (in function set_time())
 use_TAG = True
 
-SYS_update = False
-
 led = Pin("LED_BLUE", Pin.OUT)
 
 # Create a NeoPixel instance
@@ -328,7 +326,7 @@ def can_update_fm_NTP(state):
          
 
 def set_time(state):
-    global SYS_update, config
+    global config
     TAG = tag_adj(state, "set_time(): ")
     try_cnt = 0
     good_NTP = False
@@ -339,29 +337,31 @@ def set_time(state):
         try_cnt = 0
         while True:
             try:
-                if ntp.settime():   # this queries the time from an NTP server ant sets the builtin RTC 
-                    t = utime.time()
-                    if my_debug:
-                        print(TAG+f"time(): {t}")
-                    if t >= 0:
-                        good_NTP = True
+                if not state.NTP_dt_is_set:
+                    if ntp.settime():   # this queries the time from an NTP server ant sets the builtin RTC 
+                        t = utime.time()
+                        if my_debug:
+                            print(TAG+f"time(): {t}")
+                        if t >= 0:
+                            good_NTP = True
+                            break
+                    print(TAG+"trying again. Wait...")
+                    utime.sleep(2)
+                    try_cnt += 1
+                    if try_cnt >= 3:
                         break
-                print(TAG+"trying again. Wait...")
-                utime.sleep(2)
-                try_cnt += 1
-                if try_cnt >= 3:
-                    break
             except OSError as e:
                 print(TAG+f"Error: {e}")
                 try_cnt += 1
                 if try_cnt >= 5:
                     raise
         if good_NTP:
+            state.NTP_dt_is_set = True
             print(TAG+"Succeeded to update the builtin RTC from an NTP server")
             state.ntp_last_sync_dt = utime.time() # get the time serial
             if not my_debug:
                 print(TAG+f"Updating ntp_last_sync_dt to: {state.ntp_last_sync_dt}")
-            tm = utime.localtime(utime.time() + state.UTC_OFFSET)
+            tm = utime.localtime(utime.time() + state.UTC_OFFSET)    
             ths = mcp.time_has_set()
             print(TAG+f"mcp.time_has_set(): {ths}")
             if not ths:
@@ -380,9 +380,15 @@ def set_time(state):
             if not tm[state.tm_year] in dst.keys():
                 print("year: {} not in dst dictionary ({}).\nUpdate the dictionary! Exiting...".format(tm[state.tm_year], dst.keys()))
                 raise SystemExit
-            if SYS_update:
-                mRTC().datetime((tm[state.tm_year], tm[state.tm_mon], tm[state.tm_mday], tm[state.tm_wday] + 1,
-                    tm[state.tm_hour], tm[state.tm_min], tm[state.tm_sec], 0))
+            if state.set_SYS_RTC:
+                if not state.SYS_RTC_is_set:
+                    tm2 = (tm[state.tm_year], tm[state.tm_mon], tm[state.tm_mday], tm[state.tm_wday] + 1,
+                        tm[state.tm_hour], tm[state.tm_min], tm[state.tm_sec], 0)
+                    mRTC.datetime(tm2)  # was: mRTC().datetime(tm2)
+                    state.SYS_dt = tm2
+                    state.SYS_RTC_is_set = True
+                    if not my_debug:
+                        print(TAG+f"builtin RTC set to: {state.SYS_dt}")
             if my_debug and tm is not None:
                 print(TAG+"date/time updated from: \"{}\"".format(ntp.get_host()))
         else:
@@ -884,6 +890,7 @@ def get_dt_S(state):
     is_12hr = mcp.is_12hr()
     if my_debug:
         print(TAG+f"is_12hr: {is_12hr}, lcl_dt_hh: {lcl_dt_hh}, mcp_dt_hh: {mcp_dt_hh} ")
+        print(TAG+f"utime.localtime(utime.time() + state.UTC_OFFSET (= lcl_dt): {lcl_dt})")
     if is_12hr:
         if mcp_dt_hh >= 12: # or lcl_dt_hh >= 12:
             mcp_dt[state.tm_hour] -= 12
@@ -897,7 +904,7 @@ def get_dt_S(state):
     dt_s = "{:3s} {:02d} {:4d}".format(state.month_dict[mcp_dt[state.tm_mon]], mcp_dt[state.tm_mday], mcp_dt[state.tm_year])
     tm_s = "{:d}:{:02d}:{:02d} {:2s}".format(mcp_dt[state.tm_hour], mcp_dt[state.tm_min], mcp_dt[state.tm_sec], s_PM)
     ret = "{} {}, {}. Day of year: {:>3d}".format(mcp.weekday_S(), dt_s, tm_s, yrday)
-    if not my_debug:
+    if my_debug:
         print(TAG+f"return value: {ret}")
     if use_sh1107:
         msg = ["Loop: "+str(state.loop_nr)+" of "+str(state.max_loop_nr), "", mcp.weekday_S(), " ", dt_s, " ", tm_s, " ", "yearday: "+str(yrday) ]
@@ -963,7 +970,7 @@ def tag_adj(state,t):
     return ""
 
 def setup(state):
-    global SYS_update, config, wifi
+    global config, wifi
     TAG = tag_adj(state, "setup(): ")
     s_mcp = "MCP7940"
     
@@ -1071,19 +1078,12 @@ def setup(state):
             save_config()
         
         print(TAG+f"check: is_12hr: {is_12hr}")
-        
       
     if my_debug:
         upd_SRAM(state)
 
- 
     if my_debug:
         print(TAG+f"MCP7940_RTC datetime year read from SRAM = {state.SRAM_dt}")   # SRAM_dt_dict[0][dt_name_dict[0]] )
-    if state.SYS_dt[state.tm_year] == 2000:
-        if state.MCP_dt[state.tm_year] >= 2020:
-            SYS_update = True
-        elif state.SRAM_dt[state.tm_year] >= 2020:
-            SYS_update = True
 
     if not mcp.is_started():
         if my_debug:
