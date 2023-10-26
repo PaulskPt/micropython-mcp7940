@@ -6,7 +6,7 @@ This is the RTC IC used on the [TinyPICO RTC shield](https://www.tinypico.com/ad
 ## Currently developed
 
 # Example 1: without alarm
-Alarms have been implemented. They have successfully been tested (see my Circuitpython example repo), however they are not used in this example: main.py-
+Alarms have been implemented. They have successfully been tested (see Example2), however they are not used in this example: main.py-
 
 # Example 2: with alarm
 The example 2 sets Alarm1 for a datetime which is 2 minutes from the moment the alarm is set. The MCP7940 is programmed to 'signal' a 'match' of the current datetime with the datetime of Alarm1. The match is set for a match on "minutes". At the moment a match occurs, the MCP7940 MFP line will go to logical state '1'. 
