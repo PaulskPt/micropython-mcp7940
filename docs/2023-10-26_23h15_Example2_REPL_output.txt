@@ -1,0 +1,1087 @@
+Thursday 2023-10-26 21h15 utc+1
+
+by Paulus Schulinck (Github: @PaulskPt)
+
+Board: Unexpected Maker FeatherS3 (P4)
+O.S: Micropython V1.21
+
+Script to improve the existing MCP7940 library file for micropython.
+
+IDE: Thonny
+
+NOTE Flag use_sh1107 = True  (with output to the OLED display)
+
+REPL output:
+
+
+>>> %Run -c $EDITOR_CONTENT
+create mcp object try nr: 1
+mcp object created
+i2c devices present:
+device nr 1, addres dec:  61, addres hex: 0x3d, OLED display (SH1107)
+device nr 2, addres dec: 111, addres hex: 0x6f, RTC shield (MCP7940)
+
+setup():                  board unique_id: 84:f7:03:c0:65:40
+
+we are on:
+
+USB power
+
+do_connect():             WiFi already connected
+do_connect():             ip: 192.168.x.xxx
+
+WiFi
+
+connected to
+
+Vodafone-xxxxx
+
+ip:
+192.168.x.xxx
+
+neopixel_blink():         going to blink color: 'GRN'
+MYNTPTIME.ntp_time():     using host: '2.pt.pool.ntp.org'
+MYNTPTIME.ntp_time():     msg rcvd from host ( showing just sliced part: list(msg[40:44]) ): [232, 229, 72, 107]
+set_time():               Succeeded to update the builtin RTC from an NTP server
+set_time():               Updating ntp_last_sync_dt to: 751666795
+set_time():               mcp.time_has_set(): False
+set_time():               setting MCP7940 timekeeping regs to: (2023, 10, 26, 21, 19, 55, 3, 299)
+MCP7940.mcptime() setter: 23/10/26 21:15:55 (day=3)
+MCP7940.mcptime() setter: time check: (2023, 10, 26, 9, 15, 55, 3)
+set_time():               mcp is running
+set_time():               builtin RTC set to: (2023, 10, 26, 4, 21, 15, 55, 0)
+setup():                  MCP7940 power failure occurred? No
+setup():                  MCP7940 backup battery is not enabled
+setup():                  going to enable
+setup():                  backup battery is now enabled
+setup():                  setting MCP7940 for 12hr time format
+setup():                  check: is12hr: 1
+setup():                  Microcontroller (utime.localtime()) year = 2023
+setup():                  MCP7940_RTC datetime year                = 2023
+setup():                  utime.localtime() result: (2023, 10, 26, 21, 15, 55, 3, 299)
+setup():                  MCP7940 RTC set to: (2023, 10, 26, 9, 15, 55, 3)
+setup():                  start setting up MCP7940
+setup():                  check: alarm1 ALMPOL_bit: 1
+setup():                  ...
+setup():                  check: alarm2 ALMPOL_bit: 1
+setup():                  finished setting up MCP7940
+
+main():                   Test: saving and reading datetime data to/from MCP7940 SRAM
+
+Loop: 1 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:19:56 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:19:56 PM. Day of year: 299
+
+Write to SRAM:
+Oct 26 2023
+9:15:58 PM
+wkday: Thursday
+is_12hr: 1
+is_PM: 0
+
+
+Read from SRAM:
+Oct 26 2023
+9:15:58 PM
+wkday: Thursday
+is_12hr: 1
+is_PM: 0
+Added: 
+yrday: 299
+dst: -1
+
+
+main():                   loop_nr: 1, t_elapsed: 14426 mSec
+
+Loop: 1 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:29 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:29 PM. Day of year: 299
+
+main():                   loop_nr: 2, t_elapsed: 3779 mSec
+
+Loop: 2 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:33 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:33 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 3, t_elapsed: 3793 mSec
+
+Loop: 3 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:36 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:36 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 4, t_elapsed: 3792 mSec
+
+Loop: 4 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:40 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:40 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 5, t_elapsed: 3806 mSec
+
+Loop: 5 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:44 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:44 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 6, t_elapsed: 3793 mSec
+
+Loop: 6 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:48 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:48 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 7, t_elapsed: 3792 mSec
+
+Loop: 7 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:52 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:52 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 8, t_elapsed: 3792 mSec
+
+Loop: 8 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:55 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:55 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   15   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 9, t_elapsed: 3792 mSec
+
+Loop: 9 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:15:59 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:15:59 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 10, t_elapsed: 3792 mSec
+
+Loop: 10 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:03 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:03 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 11, t_elapsed: 3792 mSec
+
+Loop: 11 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:07 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:07 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 12, t_elapsed: 3805 mSec
+
+Loop: 12 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:10 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:10 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 13, t_elapsed: 3794 mSec
+
+Loop: 13 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:14 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:14 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 14, t_elapsed: 3793 mSec
+
+Loop: 14 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:18 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:18 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 15, t_elapsed: 3792 mSec
+
+Loop: 15 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:22 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:22 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 16, t_elapsed: 3792 mSec
+
+Loop: 16 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:26 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:26 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 17, t_elapsed: 3794 mSec
+
+Loop: 17 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:29 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:29 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 18, t_elapsed: 3804 mSec
+
+Loop: 18 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:33 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:33 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 19, t_elapsed: 3792 mSec
+
+Loop: 19 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:37 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:37 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 20, t_elapsed: 3793 mSec
+
+Loop: 20 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:41 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:41 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 21, t_elapsed: 3797 mSec
+
+Loop: 21 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:45 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:45 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 22, t_elapsed: 3796 mSec
+
+Loop: 22 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:48 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:48 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 23, t_elapsed: 3794 mSec
+
+Loop: 23 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:52 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:52 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    0    |   0   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   16   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | No                  | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   loop_nr: 24, t_elapsed: 3792 mSec
+
+Loop: 24 of 40
+
+Thursday
+ 
+Oct 26 2023
+ 
+9:16:56 PM
+ 
+yearday: 299
+
+main():                   Current MCP7940 RTC datetime: Thursday Oct 26 2023, 9:16:56 PM. Day of year: 299
+
+
+MCP7940 MFP output mode:
++--------+--------+--------+--------------------------+
+| SQWEN  | ALM0EN | ALM1EN |          Mode            |
++--------+--------+--------+--------------------------+
+|   0    |   1    |   0    | Alarm Interruput output  |
++--------+--------+--------+--------------------------+
+See: MCP7940N datasheet DS20005010H-page 25
+
+
+Single alarm output truth table for alarm1:
++--------+---------+-------+----------------------------------+
+| ALMPOL |  ALM1IF |  MFP  |            Match type            |
++--------+---------+-------+----------------------------------+
+|   1    |    1    |   1   | mask bits: 'b001' type: minute   |
++--------+---------+-------+----------------------------------+
+See: MCP7940N datasheet DS20005010H-page 27
+
+
+Alarm interrupt status:
+Expect next alarm at minute: 17
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|  ALARM  Nr  | ENABLED? | MONTH | DAY | HOUR | MINUTE | AM/PM  | WEEKDAY | INTERRUPT OCCURRED? | NOTES:             |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      X      |    X     |  10   |  26 |   9  |   17   |   PM   |   Thu   | X                   | CURRENT DATETIME   |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+|      1      |   Yes    |  10   |  26 |   9  |   17   |   PM   |   Thu   | Yes                 | ALARM1 SET FOR     |
++-------------+----------+-------+-----+------+--------+--------+---------+---------------------+--------------------+
+main():                   RING RING RING we have an interrupt from the RTC shield!
+Traceback (most recent call last):
+  File "<stdin>", line 1677, in <module>
+  File "<stdin>", line 1652, in main
+KeyboardInterrupt: 
+>>> 

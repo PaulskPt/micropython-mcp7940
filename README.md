@@ -4,12 +4,38 @@ A MicroPython driver for the Microchip MCP7940 RTC chip
 This is the RTC IC used on the [TinyPICO RTC shield](https://www.tinypico.com/add-ons).
 
 ## Currently developed
+
+# Example 1: without alarm
 Alarms have been implemented. They have successfully been tested (see my Circuitpython example repo), however they are not used in this example: main.py-
+
+# Example 2: with alarm
+The example 2 sets Alarm1 for a datetime which is 2 minutes from the moment the alarm is set. The MCP7940 is programmed to 'signal' a 'match' of the current datetime with the datetime of Alarm1. The match is set for a match on "minutes". At the moment a match occurs, the MCP7940 MFP line will go to logical state '1'. 
+The MFP line, pin 4 on the UM RTC Shield is connected to pin IO33 of the UM FeatherS3.
+
+When a 'match' interrupt occurs, the NEOPIXEL led will flash alternatively red and blue for some cycles. The sketch will print a message that the match interrupt occurred. It will issue a KeyboardInterrupt after receiving the RTC Interrupt.
+
+Both examples update the external RTC shield and the internal RTC from an NTP server on internet.
 
 The main.py script makes use of functions of the MCP7940 class to write and read datetime stamps to and from the MCP7940 SRAM user space
 
 ## WiFi
 In file secrets.py add your ssid and password
+
+## Configuration
+Some settings one can change in the file 'config.json'.
+Currently this file contains:
+{"COUNTRY": "PRT", "UTC_OFFSET": 1, "is_12hr": 1, "dt_str_usa": true, "STATE": "", "tmzone": "Europe/Lisbon"}
+
+Some clarification about the contents of the file config.json:
+COUNTRY, a string 3-letter value for the country you live in. (See 'ALPHA-3' codes in: https://www.iban.com/country-codes)
+UTC_OFFSET in hours deviation from UTC hour.
+is_12hr, an integer value of 1 for True or 0 for False. This will set the RTC time format: 12 or 24 hours.
+dt_str_usa: a boolean value, indicating if the script will use American date/time notation, or not.
+STATE, a string value (abbreviation, e.g.: "NY"), for the case of COUNTRY = "USA".
+tmzone: a string value, e.g.: 'America/New_York', 'Asia/Kolkata'.
+
+## Library files
+Outside the two example folders there is a 'lib' folder. The files in this folder you have to copy onto your board's flash memory together with the files that are in the example of your choice folder.
 
 ## Example usage
 
