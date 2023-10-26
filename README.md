@@ -83,7 +83,7 @@ The main.py example uses two I2C devices attached to the Unexpected maker Feathe
 
 ## The MCP7940 library
 
-The in this repo used MCP7940.py library file is changed in many ways compared to the
+The in this repo used MCP7940.py library files (each example has a different one) are changed in many ways compared to the
 contents of the file mcp7940.py in the ```micropython-mcp7940``` repo
 by Unexpected Maker (https://github.com/tinypico/micropython-mcp7940).
 
