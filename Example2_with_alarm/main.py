@@ -10,12 +10,6 @@
 # Copyright (c) 2023 (for this script and my_ntptime.py) Paulus Schulinck (@Paulskpt on GitHub)
 # License: MIT
 #
-# e) now you can again run this script permanently.
-# Update 2023-09-30:
-# When I had oscilloscope probes connected to the SCL and SDA pins of the 7940 RTC,
-# while the oscilloscope was switched off,
-# the script crashed with an OSError ENODEV.
-# When I removed the connections with the probes, the script ran OK.
 # Update 2023-10-12:
 # The script now synchronizes both the internal RTC as the external MCP7940 RTC shield clock from an exterenal NTP server.
 # Added the file my_ntptime which contains the MYNTPTIME class.
