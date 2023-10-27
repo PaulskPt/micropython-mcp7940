@@ -26,9 +26,12 @@
 # In class MCP7940 (file: mcp7940.py) this command will set the attribute 'self._is_12hr_fmt'.
 # The state of this attribute can be read from within this script by reading the property: MCP7940._is_12hr (or mcp._is_12hr)
 # All the calculations for AM/PM when 'mcp._is_12hr' returns '1', are done in this script.
-# AM/PM can be read by calling mcp._is_PM() while passing the 'hours' as a parameter, e.g.: 'isPM = mcp._is_PM(hours)'
+# AM/PM can be read by calling mcp._is_PM() while passing the 'hours' as a parameter, e.g.: 
+# - hours = 18
+# - isPM = mcp._is_PM(hours)
+#
 # The idea behind all this is: the hours of the MCP7940 clock will never be 'touched'.
-# The MCP7940 clock will always contain 24 hour time format.
+# The MCP7940 clock will always maintain 24 hour time format.
 # The 12/24 hour bit nor the AMPM bit in MCP7940 hours register be set because I experienced complications by setting these bits.
 # All the 12/24 hour and AM/PM settings and calculations will be done in this script, outside of the file mcp7940.py,
 # containing the MCP7940 class. 
