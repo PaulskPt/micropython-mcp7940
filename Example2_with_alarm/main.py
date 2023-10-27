@@ -25,6 +25,19 @@
 # In the script below I also added the function 'can_update_fm_NTP()'. 
 # This function prevents more than one request to the NTP server in 15 seconds,
 # to not cause error replies from the NTP server.
+# A word about 12/24 time format and AM/PM:
+# If, in the file 'config.json, the item 'dt_str_usa' is set 'true', in the class State, the attribute 'dt_str_usa' will be
+# set accordingly. This is done in function setup(). The following command:
+# 'mcp.set_s11_12hr(state.dt_str_usa)' will be executed. 
+# In class MCP7940 (file: mcp7940.py) this command will set the attribute 'self._is_12hr_fmt'.
+# The state of this attribute can be read from within this script by reading the property: MCP7940._is_12hr (or mcp._is_12hr)
+# All the calculations for AM/PM when 'mcp._is_12hr' returns '1', are done in this script.
+# AM/PM can be read by calling mcp._is_PM() while passing the 'hours' as a parameter, e.g.: 'isPM = mcp._is_PM(hours)'
+# The idea behind all this is: the hours of the MCP7940 clock will never be 'touched'.
+# The MCP7940 clock will always contain 24 hour time format.
+# The 12/24 hour bit nor the AMPM bit in MCP7940 hours register be set because I experienced complications by setting these bits.
+# All the 12/24 hour and AM/PM settings and calculations will be done in this script, outside of the file mcp7940.py,
+# containing the MCP7940 class. 
 #
 from mcp7940 import MCP7940
 from machine import Pin, SoftI2C, RTC, unique_id, idle   # Note I2C is deprecated!
