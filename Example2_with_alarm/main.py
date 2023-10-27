@@ -38,8 +38,11 @@ from secrets import secrets
 import ubinascii
 import json
 import feathers3
-import neopixel 
+import neopixel
+import micropython
 
+# See: https://docs.micropython.org/en/latest/reference/isr_rules.html
+micropython.alloc_emergency_exception_buf(100)
 
 # See: https://github.com/orgs/micropython/discussions/10611
 # A client MUST NOT under any conditions use a poll interval less than 15 seconds.
@@ -123,13 +126,13 @@ if use_sh1107:
     HEIGHT = None
     ROTATION = None
     BORDER = None
+    intro = ["Micropython", "FeatherS3", "MCP7940", "RTC shield", "OLED display"]
     display.sleep(False)
     display.fill(0)
-    display.text('Micropython', 0, 0, 1)
-    display.text('FeatherS3', 0, 10, 1)
-    display.text('MCP7940', 0,20, 1)
-    display.text('RTC shield', 0,30, 1)
-    display.text('OLED display', 0,40, 1)
+    row = 0
+    for _ in range(len(intro)):
+        display.text(intro[_], 0, row, 1)
+        row += 20
     display.show()
     utime.sleep(3)
     #display.sleep(True)
@@ -171,7 +174,7 @@ class State:
         self.wlan = None
         self.lStart = True
         self.loop_nr = -1
-        self.max_loop_nr = 40
+        self.max_loop_nr = 30
         self.tag_le_max = 26  # see tag_adj()
         self.use_clr_SRAM = True
         self.set_SYS_RTC = True
@@ -190,16 +193,18 @@ class State:
         self.ip = None
         self.s__ip = None
         self.mac = None
-        self.use_neopixel = None
+        self.use_neopixel = True
         self.neopixel_brightness = None
         self.neopixel_dict = {
             "BLK": (0, 0, 0),
             "RED": (200, 0, 0),
-            "GRN": (0, 200, 0)}
+            "GRN": (0, 200, 0),
+            "BLU": (0, 0, 200)}
         self.neopixel_rev_dict = {
             (0, 0, 0)   : "BLK",
             (200, 0, 0) : "RED",
-            (0, 200, 0) : "GRN"}
+            (0, 200, 0) : "GRN",
+            (0, 0, 200) : "BLU"}
         self.curr_color_set = None
         # See: https://docs.python.org/3/library/time.html#time.struct_time
         self.tm_year = 0
@@ -258,16 +263,17 @@ class State:
 # through a 10kOhm resistor, connected to VCC (3.3V).
 rtc_mfp_int = Pin(33, mode=Pin.IN, pull=Pin.PULL_DOWN)
 
-def interrupt_handler(pin):
+def interrupt_handler(state):  # (pin):
     TAG = tag_adj(state, "interrupt_handler(): ")
     if state.mfp:  # We have an interrupt!
         print(TAG+"RING RING RING we have an interrupt from the RTC shield!")
         alarm_blink(state)
+        clr_alarm(state, 1)
         mcp._clr_ALMxIF_bit(1) # Clear the interrupt
         state.mfp = False
         raise KeyboardInterrupt
 
-#rtc_mfp_int.irq(trigger=rtc_mfp_int.IRQ_RISING,handler=interrupt_handler)
+# rtc_mfp_int.irq(handler=interrupt_handler, trigger=Pin.IRQ_RISING)
 
 
 def read_fm_config(state):
@@ -396,9 +402,14 @@ def set_time(state):
             if not ths:
                 print(TAG+f"setting MCP7940 timekeeping regs to: {tm}")
                 #if MCP7940_RTC_update:
+                #-----------------------------------------------------------
+                # Set MCP7940 RTC shield timekeeping registers
+                #-----------------------------------------------------------
                 mcp.mcptime = tm  # Set the External RTC Shiels's clock
                 state.MCP_dt = tm
-                # The following 2 lines added because I saw that calls to mcp.mcpget_time() always returns the same datetime stamp
+                #-----------------------------------------------------------
+                # The following 2 lines added because I saw that calls to 
+                # mcp.mcpget_time() always returns the same datetime stamp
                 if not mcp._is_started():
                     print(TAG+"mcp was not started. Starting now")
                     mcp.start()
@@ -447,7 +458,9 @@ def neopixel_blink(state, color):
         color = state.curr_color_set
     elif not isinstance(color, str):
         color = state.curr_color_set
-    
+    else:
+        state.curr_color_set = color
+        
     if color in state.neopixel_dict:
         if neopixel:
             if not my_debug:
@@ -461,10 +474,41 @@ def neopixel_blink(state, color):
                 pixels.write()
                 utime.sleep(0.5)
             # reset to color at start of this function
-            r, g, b = state.neopixel_dict[state.curr_color_set]
+            r, g, b = state.neopixel_dict["BLK"]  # was: [state.curr_color_set]
             pixels[0] = ( r, g, b, state.neopixel_brightness)
             pixels.write()
-                
+
+def alarm_blink(state):
+    #if state.loop_nr < 3:
+    #    return
+    TAG = tag_adj(state, "alarm_blink(): ")
+    my_RED = (200,   0,   0)
+    my_GRN = (0,   200,   0)
+    my_BLU = (0,     0, 200)
+    my_BLK = (0,     0,   0)
+
+    current_color = state.curr_color_set
+    if state.use_neopixel:
+        for _ in range(5):
+            if not my_debug:
+                print(TAG+f"blinking: RED")
+            r,g,b = state.neopixel_dict["RED"] # feathers3.rgb_color_wheel( state.RED )
+            pixels[0] = ( r, g, b, state.neopixel_brightness)
+            pixels.write()
+            utime.sleep(1)
+            if not my_debug:
+                print(TAG+f"blinking: BLUE")
+            r,g,b = state.neopixel_dict["BLU"] #feathers3.rgb_color_wheel( state.BLK )
+            pixels[0] = ( r, g, b, state.neopixel_brightness)
+            pixels.write()
+            utime.sleep(1)
+        # restore last color:
+        if my_debug:
+            print(TAG+f"resetting color to: {current_color}")
+        # r,g,b = feathers3.rgb_color_wheel( current_color )
+        r,g,b = state.neopixel_dict["BLK"]
+        pixels[0] = ( r, g, b, state.neopixel_brightness)
+        pixels.write()
 
 def do_connect(state):
     TAG = tag_adj(state, "do_connect(): ")
@@ -591,7 +635,7 @@ def add_12hr(t):
         return (0,)
     le = len(t)
     if le < 6:
-        if not my_debug:
+        if my_debug:
             print(TAG+f"length param t insufficient {le}")
         return (0,)
     num_registers = len(t)
@@ -602,26 +646,13 @@ def add_12hr(t):
     elif num_registers == 7:
         year, month, date, hours, minutes, seconds, weekday = t
     #num_registers = 7 if start_reg == 0x00 else 6
-    is_12hr = 1 if state.dt_str_usa else 0
     
-    if is_12hr:
-        if my_debug:
-            print(TAG+f"hours: {hours}")
-        if hours >= 12:
-            is_PM = 1
-        else:
-            is_PM = 0
-        # If value of hour is more than 24 this is an indication that the 23/24hr bit and/or the AM/PM bit are set
-        # so we have to mask these two bits to get a proper hour readout.
-        if hours > 0x18:  # 24 hours 
-            hours &= 0x1F  # suppress the 12/24hr bit and the AM/PM bit (if present)
-        if hours > 12:  # After the previous check: if hours > 0x18
-            hours -= 12
-    else:
-        is_PM = 0
-        
+    is_12hr = mcp._is_12hr
+    is_PM = mcp._is_PM(hours) # don't use get_ampm because that returns a string type
+   
     if my_debug:
-        print(TAG+f"_is_12hr: {is_12hr}, is_PM: {is_PM}")
+        print(TAG+f"param t: {t}")
+        print(TAG+f"is_12hr: {is_12hr}, is_PM: {is_PM}")
 
     t2 = (month, date, hours, minutes, seconds,  weekday)
     t3 = (year,) + t2 if num_registers == 7 else t2
@@ -636,12 +667,27 @@ def add_12hr(t):
 
     return t3
             
-            
+def get_hours12(hh):
+    ret = hh
+    if hh >= 12:
+        ret = hh - 12
+    return ret
+         
 def upd_SRAM(state):
     TAG = tag_adj(state, "upd_SRAM(): ")
     num_registers = 0
     res = None
-
+    tm = None
+    tm2 = None
+    tm3 = None
+    s_tm = ""
+    s_tm2 = ""
+    dt1 = ""
+    dt2 = ""
+    dt3 = ""
+    dt6 = ""
+    dt7 = ""
+    
     if state.use_clr_SRAM:
         if my_debug:
             print(TAG+"First we go to clear the SRAM data space")
@@ -663,6 +709,8 @@ def upd_SRAM(state):
             else:
                 print(TAG+"the display is asleep")
         tm = mcp.mcptime  # Using EXTernal RTC
+        if my_debug:
+            print(TAG+f"tm (= mcp.mcptime): {tm}")
         s_tm = "mcp.mcptime"
         s_tm2 = "EXT"
     if my_debug:
@@ -677,13 +725,20 @@ def upd_SRAM(state):
     
     if my_debug:
         print(TAG+f"tm2: {tm2}")
+    is_12hr = 0
+    is_PM = 0
+    hours12 = 0
     
     if le == 7:
         year, month, date, hours, minutes, seconds, weekday = tm2
         tm3 = (year-2000, month, date, hours, minutes, seconds, weekday)
     elif le == 9:
         year, month, date, hours, minutes, seconds, weekday, is_12hr, is_PM = tm2
-        tm3 = (year-2000, month, date, hours, minutes, seconds, weekday, is_12hr, is_PM)
+        if is_12hr:
+            hours12 = get_hours12(hours)
+        else:
+            hours12 = hours
+        tm3 = (year-2000, month, date, hours12, minutes, seconds, weekday, is_12hr, is_PM)
     
     # print(TAG+f"month: {month}")
     if month >= 1 and month <= 12:  # prevent key error
@@ -701,13 +756,14 @@ def upd_SRAM(state):
 
     if state.dt_str_usa:
         if is_12hr:
+            hours12 = get_hours12(hours)
+            
             if my_debug:
                 print(TAG+f"hours: {hours}, minutes: {minutes}, seconds: {seconds}, is_12hr: {is_12hr}")
             if hours >= 0 and hours < 24 and minutes >= 1 and minutes < 60 and seconds >= 1 and seconds < 60:
-                # ampm = "PM" if is_PM else "AM"
-                ampm = get_ampm(0) # "PM" if mcp.is_PM() else "AM"
+                ampm = get_ampm(hours)
                 dt2 = "{:d}:{:02d}:{:02d} {}".format(
-                hours,
+                hours12,
                 minutes,
                 seconds, 
                 ampm)
@@ -734,7 +790,10 @@ def upd_SRAM(state):
     
     dt6 = "is_12hr: {}".format(is_12hr)
     
-    dt7 = "is_PM: {}".format(is_PM)
+    if is_PM:
+        dt7 = "is_PM: {}".format(is_PM)
+    else:
+        dt7 = "is_PM: {}".format(ampm)
 
 
     msg = ["Write to SRAM:", dt1, dt2, dt3, dt6, dt7]
@@ -810,8 +869,7 @@ def upd_SRAM(state):
                 year)
 
         if is_12hr:
-            # ampm = "PM" if is_PM==1 else "AM"
-            ampm = get_ampm(hours)
+            ampm = get_ampm(hours+12)
             
             if hours >= 0 and hours < 24 and minutes >= 1 and minutes < 60 and seconds >= 1 and seconds < 60:
                 dt2 = "{:d}:{:02d}:{:02d} {}".format(
@@ -844,7 +902,10 @@ def upd_SRAM(state):
         
         dt6 = "is_12hr: {}".format(is_12hr)
     
-        dt7 = "is_PM: {}".format(is_PM)
+        if is_PM:
+            dt7 = "is_PM: {}".format(is_PM)
+        else:
+            dt7 = "is_PM: {}".format(ampm)
 
         msg = ["Read from SRAM:", dt1, dt2, dt3, dt6, dt7, "Added: ", dt4, dt5]
         
@@ -874,7 +935,7 @@ def prepare_alm_int(state):
     mcp._clr_SQWEN_bit()  # Clear the Square Wave Enable bit
     for _ in range(2):
         if not mcp.alarm_is_enabled(_+1):
-            mcp.alarm_enable(_+1, True)  # Enable the alarm (1 or 2)
+            res = mcp.alarm_enable(_+1, True)  # Enable the alarm (1 or 2)
 
 
 def set_alarm(state, alarm_nr = 1, mins_fm_now=10):
@@ -961,6 +1022,7 @@ def clr_alarm(state, alarm_nr=None):
             mcp._clr_ALMxIF_bit(1) # clear alarm1 Interrupt Flag bit
             state.alarm1_set = False
             state.alarm1 = eal
+            mcp.alarm_enable(alarm_nr, False)  # Disable alarm1
             if my_debug:
                 print(TAG+f"state.alarm1: {state.alarm1[:num_regs]}")
             ck = mcp.alarm1[:6]
@@ -969,6 +1031,7 @@ def clr_alarm(state, alarm_nr=None):
             mcp._clr_ALMxIF_bit(2) # clear alarm2 Interrupt Flag bit
             state.alarm2_set = False
             state.alarm2 = eal
+            mcp.alarm_enable(alarm_nr, False)  # Disable alarm2
             if my_debug:
                 print(TAG+f"state.alarm2: {state.alarm2[:num_regs]}")
             ck = mcp.alarm2[:6]
@@ -1125,18 +1188,13 @@ def show_alarm_output_truth_table(state, alarm_nr=None):
     print("See: MCP7940N datasheet DS20005010H-page 27")
     print()
 
-def get_ampm(i):
+def get_ampm(hh):
     ret = " ?"
-    if isinstance(i, int):
-        if state.dt_str_usa:
-            if mcp._is_12hr:
-                is_pm = mcp._is_PM()
-                if is_pm > -1:
-                    ret = "PM" if is_pm == 1 else "AM"
-            else:
-                ret = str(i)
+    if isinstance(hh, int):
+        if mcp._is_12hr: # was: if state.dt_str_usa:
+            ret = "PM" if mcp._is_PM(hh) == 1 else "AM"
         else:
-            ret = str(i)
+            ret = str(hh)
     return ret
 
 def show_alm_int_status(state):
@@ -1149,6 +1207,10 @@ def show_alm_int_status(state):
     
     ae1=mcp.alarm_is_enabled(1)
     ae2=mcp.alarm_is_enabled(2)
+    is_12hr = mcp._is_12hr
+    
+    if my_debug:
+        print(TAG+f"alarm1 enabled:{ae1}, alarm2 enabled: {ae2}")
 
     if ae1:
         alarm1en = "Yes" if ae1 else "No  "
@@ -1158,7 +1220,11 @@ def show_alm_int_status(state):
             
         mo1, dd1, hh1, mi1, ss1, wd1 = ts1
         
-        ss1 = get_ampm(ss1)
+        ss1 = get_ampm(hh1)
+        
+        if is_12hr:
+            if hh1 >= 12:
+                hh1 -= 12
 
         match1 = mcp._match_lst[mcp._read_ALM_POL_IF_MSK_bits(1, state.MSK)]
         if match1 == "mm" and not state.dt_str_usa:
@@ -1171,7 +1237,11 @@ def show_alm_int_status(state):
             
         mo2, dd2, hh2, mi2, ss2, wd2 = ts2
         
-        ss2 = get_ampm(ss2)    
+        ss2 = get_ampm(hh2)
+        
+        if is_12hr:
+            if hh2 >= 12:
+                hh2 -= 12
        
         match2 = mcp._match_lst[mcp._read_ALM_POL_IF_MSK_bits(2, state.MSK)]
         if match2 == "mm" and not state.dt_str_usa:
@@ -1192,7 +1262,11 @@ def show_alm_int_status(state):
     elif num_registers == 11:
         _, c_mo, c_dd, c_hh, c_mi, c_ss, c_wd, _, _, _, _ = tm_current  # Discard year, yearday and isdst, is_12hr, is_PM
     
-    c_ss = get_ampm(c_ss)
+    c_ss = get_ampm(c_hh)
+    
+    if is_12hr:
+            if c_hh >= 12:
+                c_hh -= 12
     
     # v = "Yes " if rtc_mfp_int.value else "No  "
     v = "Yes " if state.mfp else "No  "
@@ -1233,38 +1307,6 @@ def show_alm_int_status(state):
     if ae2:
         print(s5) # idem
         print(s1)
-
-
-def alarm_blink(state):
-    if state.loop_nr < 3:
-        return
-    TAG = tag_adj(state, "alarm_blink(): ")
-    my_RED = (0,   200,   0)
-    my_GRN = (200,   0,   0)
-    my_BLU = (0,     0, 200)
-    my_BLK = (0,     0,   0)
-
-    current_color = state.curr_color_set
-    if state.use_neopixel:
-        for _ in range(5):
-            if my_debug:
-                print(TAG+f"blinking: RED")
-            r,g,b = my_RED # feathers3.rgb_color_wheel( state.RED )
-            pixels[0] = ( r, g, b, state.neopixel_brightness)
-            pixels.write()
-            utime.sleep(1)
-            if my_debug:
-                print(TAG+f"blinking: BLUE")
-            r,g,b = my_BLU #feathers3.rgb_color_wheel( state.BLK )
-            pixels[0] = ( r, g, b, state.neopixel_brightness)
-            pixels.write()
-            utime.sleep(1)
-        # restore last color:
-        if my_debug:
-            print(TAG+f"resetting color to: {current_color}")
-        r,g,b = feathers3.rgb_color_wheel( current_color )
-        pixels[0] = ( r, g, b, state.neopixel_brightness)
-        pixels.write()
 
 dt_name_dict = {
     0: "year",
@@ -1324,18 +1366,23 @@ def get_dt_S(state):
     mcp_dt_hh = mcp_dt[state.tm_hour]
     yrday = mcp.yearday()
     is_12hr = mcp._is_12hr
+    
+    if is_12hr:
+        if mcp_dt_hh >= 12:
+            mcp_dt_hh -= 12
+    
     if my_debug:
         print(TAG+f"is_12hr: {is_12hr}, lcl_dt_hh: {lcl_dt_hh}, mcp_dt_hh: {mcp_dt_hh} ")
         # print(TAG+f"utime.localtime(utime.time() + state.UTC_OFFSET (= lcl_dt): {lcl_dt})")
         print(TAG+f"utime.localtime(utime.time()) (= lcl_dt): {lcl_dt})")
 
-    s_PM = get_ampm(0)
+    s_PM = get_ampm( mcp_dt[state.tm_hour])  # don't use mcp_dt_hh because it has been changed
 
     if my_debug:
         print(TAG+f"mcp.mcptime: {mcp_dt}")
     try:
         dt_s = "{:3s} {:02d} {:4d}".format(state.month_dict[mcp_dt[state.tm_mon]], mcp_dt[state.tm_mday], mcp_dt[state.tm_year])
-        tm_s = "{:d}:{:02d}:{:02d} {:2s}".format(mcp_dt[state.tm_hour], mcp_dt[state.tm_min], mcp_dt[state.tm_sec], s_PM)
+        tm_s = "{:d}:{:02d}:{:02d} {:2s}".format(mcp_dt_hh, mcp_dt[state.tm_min], mcp_dt[state.tm_sec], s_PM)
         ret = "{} {}, {}. Day of year: {:>3d}".format(mcp.weekday_S(), dt_s, tm_s, yrday)
         wd = mcp.weekday_S()
         yd = str(yrday)
@@ -1429,6 +1476,9 @@ def setup(state):
     
     if state.board_id == s_id:
         try:
+            state.curr_color_set = "BLK"
+            neopixel_color(state, state.curr_color_set)
+            
             usb_pwr = feathers3.get_vbus_present()
             if usb_pwr:
                 s_pwr ="USB"
@@ -1442,8 +1492,6 @@ def setup(state):
             
             state.neopixel_brightness = 0.005
 
-            state.curr_color_set = "BLK"
-            neopixel_color(state, state.curr_color_set)
         except ValueError:
             pass
     
@@ -1571,7 +1619,7 @@ def setup(state):
 
     if not my_debug:
         print(TAG+"finished setting up MCP7940")
-    # prepare_alm_int(state)  # Prepare for alarm interrupt polling
+    # ret = prepare_alm_int(state)  # Prepare for alarm interrupt polling
 
 def main():
     global state
@@ -1630,11 +1678,13 @@ def main():
         while True:
              # ------------------------------------------------------------------------------------------------
             if alarm_start:
-                clr_alarm(state, 1)
+                alarm_nr = 1
+                clr_alarm(state, alarm_nr)
                 state.alarm1_set = False
-                mcp._set_ALMxMSK_bits(1, 1)  # Set Alarm1 Mask bits to have Alarm Minutes match
+                # mcp._set_ALMxMSK_bits(alarm_nr, 1)  # Set Alarm1 Mask bits to have Alarm Minutes match
                 if not state.alarm1_set:
-                    set_alarm(state, 1, 2) # Set alarm1 for time now + 2 minutes
+                    mcp.alarm_enable(alarm_nr, True)   # Enable alarm1
+                    set_alarm(state, alarm_nr, 2) # Set alarm1 for time now + 2 minutes
                     state.alarm1_set = True
                     alarm_start = False
                 #pol_alarm_int(state)  # Check alarm interrupt
@@ -1643,18 +1693,23 @@ def main():
             if state.loop_nr >= 3:  # Only perform this
                 show_alarm_output_truth_table(state, 1) # Show alarm output truth table for alarm1
                 show_alm_int_status(state)
+                state.alarm1_int = True if mcp._read_ALM_POL_IF_MSK_bits(1, state.IF) else False
+                if state.alarm1_int:
+                    interrupt_handler(state)
             # pol_alarm_int(state)  # Check alarm interrupt
+            """
             if state.mfp:  # We have an interrupt!
                 print(TAG+"RING RING RING we have an interrupt from the RTC shield!")
                 alarm_blink(state)
                 mcp._clr_ALMxIF_bit(1) # Clear the interrupt
                 state.mfp = False
                 raise KeyboardInterrupt
+            """
             # -------------------------------------------------------------------------------------------------
             t_current = utime.ticks_ms()
             t_elapsed = t_current - t_start      
             if t_elapsed >= 1000: # was: 10000:
-                print(TAG+f"loop_nr: {state.loop_nr}, t_elapsed: {t_elapsed} mSec")
+                print("\n"+TAG+f"loop_nr: {state.loop_nr}, t_elapsed: {t_elapsed} mSec")
                 t_start = t_current
                 #dt = get_dt(state)  # Get datetime
                 #if len(dt) >= 2:

@@ -6,8 +6,6 @@
 # In class MCCP7940, the following functions added by @Paulskpt:
 # - set_s11_12hr()
 # - set_12hr()
-# - _is_12hr()
-# - set_PM()
 # - _is_PM()
 # - weekday_N()
 # - weekday_S()
@@ -16,12 +14,10 @@
 # - clr_pwr_failure_bit()
 # - _clr_SQWEN_bit()
 # - _read_SQWEN_bit()
+# . _read_ALM_POL_IF_MSK_bits()
 # - _set_ALMPOL_bit()
 # - _clr_ALMPOL_bit()
-# - _read_ALMPOL_bit()
-# - _read_ALMxIF_bit()
 # - _clr_ALMxIF_bit()
-# - _read_ALMxMSK_bits()
 # - _set_ALMxMSK_bits()
 # - pwr_updn_dt()
 # - clr_SRAM()
@@ -29,6 +25,9 @@
 # - write_to_SRAM()
 # - read_fm_SRAM()
 # - pr_regs()
+#
+# Added property:
+# - _is_12hr
 #
 # Added dictionaries: DOW and DOM
 # Added self._match_lst
@@ -413,25 +412,30 @@ class MCP7940:
     
     # Set the 12hr bit and set self._is_12hr_fmt flag if not yet set    
     # See MCP7940 Datasheet DS20005010H-page 17
+    # Return 0 if able to set self._is_12hr_fmt
+    # We're not going to set the 12hr fmt bit in the MCP7940 hour register
+    # because it appeared this did not work. Better set a flag within this class
     """ Function added by @Paulskpt """
     def set_12hr(self, _12hr=None):
         TAG = MCP7940.CLS_NAME+".set_12hr(): "
+        ret = 0
         if _12hr is None:
-            return -1
+            return ret
         if my_debug:
             print(TAG+f"param _12hr: {_12hr}, type(_12hr): {type(_12hr)}")
         if not isinstance(_12hr, bool):
-            return -1
+            return ret
         bit = 6
         reg = MCP7940.RTCHOUR
         value = 1 if _12hr else 0
         if self._is_12hr_fmt == -1:  # If not set yet, set it to remember
              self._is_12hr_fmt = value # Remember the settingset_PM
-        if my_debug:
-            print(f"MCOP7940.set_12hr(): setting reg: {hex(reg)}, bit {bit}, _12hr {value}")
-        ret = self._set_bit(reg, bit, value)
-        if ret == -1:
-            print(TAG+self.sbf)
+             ret = 1
+        #if my_debug:
+        #    print(f"MCOP7940.set_12hr(): setting reg: {hex(reg)}, bit {bit}, _12hr {value}")
+        #ret = self._set_bit(reg, bit, value)
+        #if ret == -1:
+        #    print(TAG+self.sbf)
         return ret
     
     """ Function added by @Paulskpt """
@@ -439,18 +443,19 @@ class MCP7940:
     def _is_12hr(self):
         return self._is_12hr_fmt
     
+    """
     # Set the AMPM bit if the 12hr bit is set
     # When param isPM is None then the function
     # will read self.mcptime and 
     # extract the hours value to discern AM/PM
-    """ Function added by @Paulskpt """
+    # Function added by @Paulskpt 
     def set_PM(self, hour):
         TAG = MCP7940.CLS_NAME+".set_PM(): "
         #ret = -1
         ret2 = 0
         value = None
         is12hr = -1
-        if my_debug:
+        if not my_debug:
             print(TAG+f"self._is_12hr_fmt: {self._is_12hr_fmt}, param hour: {hour}")
         is12hr = self._is_12hr
         if is12hr == 1:
@@ -467,30 +472,34 @@ class MCP7940:
                 if my_debug:
                     print(TAG+f"value set: {value}")
         return ret2                    
-    
+    """
     # Return the AMPM bit is the 12hr bit is set
     # See MCP7940 Datasheet DS20005010H-page 17
     """ Function added by @Paulskpt """
-    def _is_PM(self):
+    def _is_PM(self, hour):
         TAG = MCP7940.CLS_NAME+"._is_PM(): "
         ret = 0
-        if my_debug:
-            print(TAG+f"self._is_12hr_fmt: {self._is_12hr_fmt}")
-        if self._is_12hr_fmt > -1:
-            _is12hr = self._is_12hr_fmt
-        else:
-            _is12hr = self._is_12hr
-        if _is12hr:
+        if hour is None:
+            return ret
+        if hour >= 0 and hour < 24:
+            is_12hr = self._is_12hr
+            if my_debug:
+                print(TAG+f"self._is_12hr: {is_12hr}")
+            if is_12hr:
+                return 1 if hour >= 12 else 0
+        return ret
+        """
             bit = MCP7940.AMPM_BIT
             reg = MCP7940.RTCHOUR
             ret = self._read_bit(reg, bit)
             if ret == -1:
                 if my_debug:
                     print(TAG+self.rbf)
-            if my_debug:
+            if not my_debug:
                 print(TAG+f"return ret: {ret}")
-        return ret
-         
+
+            return ret
+        """     
     # Enable alarm x
     # See datasheet  DS20005010H-page 26
     """ Function added by @Paulskpt """
@@ -1066,11 +1075,8 @@ class MCP7940:
             print(TAG+"hh: {:2d}, b\'{:08b}\'".format(hh, hh))
         if self._is_12hr:
             hh &= 0x1F  # mask 12/24 bit and mask AM/PM bit
-            hh_org = hh # remember for set_PM
-            if hh >= 12:
-                hh -= 12
-        else:
-            hh_org = hh
+            #if hh >= 12:
+            #    hh -= 12
         
         if my_debug:
             print(TAG+"hh (bits 7-5 masked): {:2d}, b\'{:08b}\'".format(hh, hh))
@@ -1080,9 +1086,6 @@ class MCP7940:
         # now = (2019, 7, 16, 15, 29, 14, 6, 167)  # Sunday 2019/7/16 3:29:14pm (yearday=167)
         # year, month, date, hours, minutes, seconds, weekday, yearday = t
         # time_reg = [seconds, minutes, hours, weekday, date, month, year % 100]
-        
-        # update AM/PM bit
-        res = self.set_PM(hh_org)
 
         if my_debug:
             print(TAG+f"returning result t3: {t3}")
@@ -1249,6 +1252,8 @@ class MCP7940:
         ads = MCP7940.SRAM_START_ADDRESS
         
         for _ in range(le4):  # don't save tm_yday (can be > 255) and don't save tm_isdst (can be negative)
+            if my_debug:
+                print(TAG+f"dt4[{_}]: {dt4[_]}, type(dt4[{_}]): {type(dt4[_])}")
             out_buf.append(dt4[_])
 
         le = len(out_buf)
